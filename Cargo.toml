@@ -1,0 +1,8 @@
+[package]
+name = "ambrosia"
+version = "0.1.0"
+edition = "2021"
+
+
+[dependencies]
+rltk = "0.8.1"
