@@ -3,7 +3,6 @@
 
 use rltk::{Rltk, GameState, RGB};
 
-mod rendering;
 mod map;
 mod components;
 mod ecs;
@@ -43,10 +42,7 @@ fn main() -> rltk::BError {
 
     add_system!(gs.world, systems::DebugSystem::new(components::DebugLevel::None));
 
-    match entities::player(gs.world.spawn(), "Hazel".to_string(), 60, 40) {
-        Ok(_) => println!("{}", "spawned player"),
-        Err(_) => ()
-    };
+    let _ = entities::player(gs.world.spawn(), "Hazel".to_string(), 60, 40);
 
     rltk::main_loop(context, gs)
 }

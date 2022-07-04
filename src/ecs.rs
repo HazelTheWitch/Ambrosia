@@ -225,5 +225,3 @@ pub enum ECSError {
 
 // TODO: Query Helper Methods
 // TODO: Query Macro / `for (T1, T2, T3) in query!(world, T1, T2, T3)` syntax
-
-// TODO: System abstraction
