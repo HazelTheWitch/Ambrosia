@@ -23,25 +23,3 @@ macro_rules! add_system {
         $world.add_system(std::boxed::Box::new($system))
     };
 }
-
-#[macro_export]
-macro_rules! impl_components {
-    ($name: ident) => {
-        impl_component!($name);
-        impl_any_component!($name);
-    };
-}
-
-#[macro_export]
-macro_rules! impl_any_component {
-    ($name: ident) => {
-        impl crate::ecs::AnyComponent for $name { }
-    };
-}
-
-#[macro_export]
-macro_rules! impl_component {
-    ($name: ident) => {
-        impl crate::ecs::Component for $name { }
-    };
-}

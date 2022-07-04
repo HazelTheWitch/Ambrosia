@@ -7,17 +7,9 @@ pub trait System {
     fn execute(&self, world: &World);
 }
 
-pub trait Component {
-    fn allowed(&self, _entity: &Entity) -> bool {
-        true
-    }
-}
-
-pub trait AnyComponent: Component + Any {}
-
 pub struct Entity {
     id: usize,
-    components: HashMap<TypeId, UnsafeCell<Box<dyn AnyComponent>>>
+    components: HashMap<TypeId, UnsafeCell<Box<dyn Any>>>
 }
 
 impl Entity {
@@ -25,7 +17,7 @@ impl Entity {
         Entity { id, components: HashMap::new() }
     }
 
-    pub fn insert<T: AnyComponent>(&mut self, component: T) -> Result<&mut Self, ECSError> {
+    pub fn insert<T: Any>(&mut self, component: T) -> Result<&mut Self, ECSError> {
         let id = component.type_id();
 
         if !self.components.contains_key(&id) {
@@ -41,53 +33,40 @@ impl Entity {
         self.components.contains_key(type_id)
     }
 
-    pub fn has_component<T: AnyComponent>(&self) -> bool {
+    pub fn has_component<T: Any>(&self) -> bool {
         self.components.contains_key(&TypeId::of::<T>())
     }
 
-    fn get_component_cell<T: AnyComponent>(&self) -> Option<&UnsafeCell<Box<dyn AnyComponent>>> {
+    fn get_component_cell<T: Any>(&self) -> Option<&UnsafeCell<Box<dyn Any>>> {
         self.components.get(&TypeId::of::<T>())
     }
 
-    pub fn get_component<T: AnyComponent>(&self) -> Option<&T> {
+    pub fn get_component<T: Any>(&self) -> Option<&T> {
         let cell = self.get_component_cell::<T>()?;
 
         unsafe {
-            let the_box = &*cell.get();
-
-            let the_any = *the_box;
-
-            Some(&*the_any as &T)
-            // let any = &mut *cell.get() as &mut dyn Any;
-
-            // Some(&**any.downcast_ref::<Box<T>>()?)
+            (*cell.get()).downcast_ref::<T>()
         }
     }
 
-    pub fn get_component_mut<T: AnyComponent>(&self) -> Option<&mut T> {
+    pub fn get_component_mut<T: Any>(&self) -> Option<&mut T> {
         let cell = self.get_component_cell::<T>()?;
 
         unsafe {
-            // let any = &mut *cell.get() as &mut dyn Any;
-
-            // Some(&mut **any.downcast_mut::<Box<T>>()?)
+            (*cell.get()).downcast_mut::<T>()
         }
     }
 
-    pub unsafe fn get_component_unchecked<T: AnyComponent>(&self) -> &T {
+    pub unsafe fn get_component_unchecked<T: Any>(&self) -> &T {
         let cell = self.get_component_cell::<T>().unwrap();
 
-        // let any = &mut *cell.get() as &mut dyn Any;
-
-        // &**any.downcast_ref_unchecked::<Box<T>>()
+        (*cell.get()).downcast_ref_unchecked::<T>()
     }
 
-    pub unsafe fn get_component_mut_unchecked<T: AnyComponent>(&self) -> &mut T {
+    pub unsafe fn get_component_mut_unchecked<T: Any>(&self) -> &mut T {
         let cell = self.get_component_cell::<T>().unwrap();
 
-        // let any = &mut *cell.get() as &mut dyn Any;
-
-        // &mut **any.downcast_mut_unchecked::<Box<T>>()
+        (*cell.get()).downcast_mut_unchecked::<T>()
     }
 
     pub fn id(&self) -> usize {
@@ -107,12 +86,12 @@ impl Query {
         Query { includes: Vec::new(), excludes: Vec::new() }
     }
 
-    pub fn include<T: AnyComponent>(mut self) -> Self {
+    pub fn include<T: Any>(mut self) -> Self {
         self.includes.push(TypeId::of::<T>());
         self
     }
 
-    pub fn exclude<T: AnyComponent>(mut self) -> Self {
+    pub fn exclude<T: Any>(mut self) -> Self {
         self.excludes.push(TypeId::of::<T>());
         self
     }

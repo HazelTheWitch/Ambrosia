@@ -29,8 +29,6 @@ impl System for DebugSystem {
                 }
             }
 
-            println!("{}, {}", name, e.has_component::<Named>());
-
             if let Some(debug) = e.get_component::<Debug>() {
                 if debug.max_level >= self.min_level {
                     if debug.count() > 0 {

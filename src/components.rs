@@ -1,16 +1,11 @@
 use std::{collections::HashMap, fmt::Display};
 use rltk::RGB;
 
-use crate::ecs::{Component, Entity};
-use crate::{impl_components, impl_any_component, impl_component};
-
 #[derive(Copy, Clone, PartialEq)]
 pub struct Position {
     x: i32,
     y: i32
 }
-
-impl_components!(Position);
 
 impl Position {
     pub fn new(x: i32, y: i32) -> Self {
@@ -51,8 +46,6 @@ pub struct Debug {
     pub messages: HashMap<String, DebugMessage>
 }
 
-impl_components!(Debug);
-
 impl Debug {
     pub fn new() -> Self {
         Debug { max_level: DebugLevel::None, messages: HashMap::new() }
@@ -80,8 +73,6 @@ pub struct Named {
     pub name: String
 }
 
-impl_components!(Named);
-
 impl Named {
     pub fn new(name: String) -> Self {
         Named { name }
@@ -94,14 +85,6 @@ pub struct Renderer {
     bg: RGB
 }
 
-impl Component for Renderer {
-    fn allowed(&self, entity: &Entity) -> bool {
-        entity.has_component::<Position>()
-    }
-}
-
-impl_any_component!(Renderer);
-
 impl Renderer {
     pub fn new(glyph: rltk::FontCharType, fg: RGB, bg: RGB) -> Self {
         Renderer { glyph, fg, bg }
@@ -109,14 +92,6 @@ impl Renderer {
 }
 
 pub struct Centered { }
-
-impl Component for Centered {
-    fn allowed(&self, entity: &Entity) -> bool {
-        entity.has_component::<Position>()
-    }
-}
-
-impl_any_component!(Centered);
 
 impl Centered {
     pub fn new() -> Self {

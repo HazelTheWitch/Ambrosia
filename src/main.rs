@@ -32,12 +32,12 @@ impl GameState for State {
     }
 }
 
-fn main() {// -> rltk::BError
-    // use rltk::RltkBuilder;
+fn main() -> rltk::BError {
+    use rltk::RltkBuilder;
 
-    // let context = RltkBuilder::simple(120, 80)?
-    //     .with_title("Ambrosia")
-    //     .build()?;
+    let context = RltkBuilder::simple(120, 80)?
+        .with_title("Ambrosia")
+        .build()?;
 
     let mut gs = State::new();
 
@@ -47,8 +47,6 @@ fn main() {// -> rltk::BError
         Ok(_) => println!("{}", "spawned player"),
         Err(_) => ()
     };
-    
-    gs.world.tick();
 
-    // rltk::main_loop(context, gs)
+    rltk::main_loop(context, gs)
 }
