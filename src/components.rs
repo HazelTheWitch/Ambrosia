@@ -1,15 +1,20 @@
 use std::{collections::HashMap, fmt::Display};
 use rltk::RGB;
 
+use crate::vectors::Vector;
+
 #[derive(Copy, Clone, PartialEq)]
 pub struct Position {
-    x: i32,
-    y: i32
+    position: Vector
 }
 
 impl Position {
     pub fn new(x: i32, y: i32) -> Self {
-        Position { x, y }
+        Position { position: Vector::new(x, y) }
+    }
+
+    pub fn coords(&self) -> Vector {
+        self.position
     }
 }
 
@@ -91,10 +96,10 @@ impl Renderer {
     }
 }
 
-pub struct Centered { }
+pub struct Camera { }
 
-impl Centered {
+impl Camera {
     pub fn new() -> Self {
-        Centered { }
+        Camera { }
     }
 }

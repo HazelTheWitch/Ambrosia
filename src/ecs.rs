@@ -7,66 +7,105 @@ pub trait System {
     fn execute(&self, world: &World);
 }
 
-pub struct Entity {
-    id: usize,
-    components: HashMap<TypeId, UnsafeCell<Box<dyn Any>>>
+struct DynamicStore {
+    data: HashMap<TypeId, UnsafeCell<Box<dyn Any>>>
 }
 
-impl Entity {
-    pub fn new(id: usize) -> Self {
-        Entity { id, components: HashMap::new() }
+impl DynamicStore {
+    pub fn new() -> Self {
+        DynamicStore { data: HashMap::new() }
     }
 
-    pub fn insert<T: Any>(&mut self, component: T) -> Result<&mut Self, ECSError> {
-        let id = component.type_id();
+    pub fn insert<T: Any>(&mut self, data: T) -> Result<&mut Self, ECSError> {
+        let id = data.type_id();
 
-        if !self.components.contains_key(&id) {
-            self.components.insert(id, UnsafeCell::new(Box::new(component)));
+        if !self.data.contains_key(&id) {
+            self.data.insert(id, UnsafeCell::new(Box::new(data)));
             
             Ok(self)
         } else {
-            Err(ECSError::ComponentAlreadyExists)
+            Err(ECSError::DataAlreadyExists)
         }
     }
 
-    fn has_component_type_id(&self, type_id: &TypeId) -> bool {
-        self.components.contains_key(type_id)
+    pub fn has_type_id(&self, type_id: &TypeId) -> bool {
+        self.data.contains_key(type_id)
     }
 
-    pub fn has_component<T: Any>(&self) -> bool {
-        self.components.contains_key(&TypeId::of::<T>())
+    pub fn has<T: Any>(&self) -> bool {
+        self.data.contains_key(&TypeId::of::<T>())
     }
 
-    fn get_component_cell<T: Any>(&self) -> Option<&UnsafeCell<Box<dyn Any>>> {
-        self.components.get(&TypeId::of::<T>())
+    fn get_cell<T: Any>(&self) -> Option<&UnsafeCell<Box<dyn Any>>> {
+        self.data.get(&TypeId::of::<T>())
     }
 
-    pub fn get_component<T: Any>(&self) -> Option<&T> {
-        let cell = self.get_component_cell::<T>()?;
+    pub fn get<T: Any>(&self) -> Option<&T> {
+        let cell = self.get_cell::<T>()?;
 
         unsafe {
             (*cell.get()).downcast_ref::<T>()
         }
     }
 
-    pub fn get_component_mut<T: Any>(&self) -> Option<&mut T> {
-        let cell = self.get_component_cell::<T>()?;
+    pub fn get_mut<T: Any>(&self) -> Option<&mut T> {
+        let cell = self.get_cell::<T>()?;
 
         unsafe {
             (*cell.get()).downcast_mut::<T>()
         }
     }
 
-    pub unsafe fn get_component_unchecked<T: Any>(&self) -> &T {
-        let cell = self.get_component_cell::<T>().unwrap();
+    pub unsafe fn get_unchecked<T: Any>(&self) -> &T {
+        let cell = self.get_cell::<T>().unwrap();
 
         (*cell.get()).downcast_ref_unchecked::<T>()
     }
 
-    pub unsafe fn get_component_mut_unchecked<T: Any>(&self) -> &mut T {
-        let cell = self.get_component_cell::<T>().unwrap();
+    pub unsafe fn get_mut_unchecked<T: Any>(&self) -> &mut T {
+        let cell = self.get_cell::<T>().unwrap();
 
         (*cell.get()).downcast_mut_unchecked::<T>()
+    }
+}
+
+pub struct Entity {
+    id: usize,
+    components: DynamicStore
+}
+
+impl Entity {
+    pub fn new(id: usize) -> Self {
+        Entity { id, components: DynamicStore::new() }
+    }
+
+    pub fn insert_component<T: Any>(&mut self, component: T) -> Result<&mut Self, ECSError> {
+        self.components.insert(component)?;
+        Ok(self)
+    }
+
+    pub fn has_component<T: Any>(&self) -> bool {
+        self.components.has::<T>()
+    }
+
+    pub fn has_component_type_id(&self, type_id: &TypeId) -> bool {
+        self.components.has_type_id(type_id)
+    }
+
+    pub fn get_component<T: Any>(&self) -> Option<&T> {
+        self.components.get::<T>()
+    }
+
+    pub fn get_component_mut<T: Any>(&self) -> Option<&mut T> {
+        self.components.get_mut::<T>()
+    }
+
+    pub unsafe fn get_component_unchecked<T: Any>(&self) -> &T {
+        self.components.get_unchecked::<T>()
+    }
+
+    pub unsafe fn get_component_mut_unchecked<T: Any>(&self) -> &mut T {
+        self.components.get_mut_unchecked::<T>()
     }
 
     pub fn id(&self) -> usize {
@@ -138,12 +177,13 @@ impl Add for Query {
 
 pub struct World {
     entities: Vec<Option<Entity>>,
-    systems: Vec<Box<dyn System>>
+    systems: Vec<Box<dyn System>>,
+    resources: DynamicStore
 }
 
 impl World {
     pub fn new() -> Self {
-        World { entities: Vec::new(), systems: Vec::new() }
+        World { entities: Vec::new(), systems: Vec::new(), resources: DynamicStore::new() }
     }
 
     pub fn spawn(&mut self) -> Result<&mut Entity, ECSError> {
@@ -215,12 +255,41 @@ impl World {
             system.execute(self)
         }
     }
+
+    pub fn insert_resource<T: Any>(&mut self, resource: T) -> Result<&mut Self, ECSError> {
+        self.resources.insert(resource)?;
+        Ok(self)
+    }
+
+    pub fn has_resource<T: Any>(&self) -> bool {
+        self.resources.has::<T>()
+    }
+
+    pub fn has_resource_type_id(&self, type_id: &TypeId) -> bool {
+        self.resources.has_type_id(type_id)
+    }
+
+    pub fn get_resource<T: Any>(&self) -> Option<&T> {
+        self.resources.get::<T>()
+    }
+
+    pub fn get_resource_mut<T: Any>(&self) -> Option<&mut T> {
+        self.resources.get_mut::<T>()
+    }
+
+    pub unsafe fn get_resource_unchecked<T: Any>(&self) -> &T {
+        self.resources.get_unchecked::<T>()
+    }
+
+    pub unsafe fn get_resource_mut_unchecked<T: Any>(&self) -> &mut T {
+        self.resources.get_mut_unchecked::<T>()
+    }
 }
 
 
 pub enum ECSError {
-    ComponentAlreadyExists,
-    CouldNotSpawn
+    DataAlreadyExists,
+    CouldNotSpawn,
 }
 
 // TODO: Query Helper Methods

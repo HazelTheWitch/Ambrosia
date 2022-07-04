@@ -1,4 +1,4 @@
-use crate::clamp;
+use crate::{clamp, vectors::Vector};
 
 /// Represents a tile
 /// Strength:
@@ -38,8 +38,8 @@ impl Tile {
 }
 
 pub struct Map {
-    width: usize,
-    height: usize,
+    pub width: usize,
+    pub height: usize,
     data: Vec<Tile>
 }
 
@@ -48,21 +48,21 @@ impl Map {
         let mut map = Map::empty(width, height);
 
         for x in 0..(width as i32) {
-            if let Some(tile) = map.get_mut(x, 0) {
+            if let Some(tile) = map.get_mut(&Vector::from((x, 0))) {
                 tile.set_both(255);
             }
             
-            if let Some(tile) = map.get_mut(x, height as i32 - 1) {
+            if let Some(tile) = map.get_mut(&Vector::from((x, height as i32 - 1))) {
                 tile.set_both(255);
             }
         }
 
         for y in 0..(height as i32) {
-            if let Some(tile) = map.get_mut(0, y) {
+            if let Some(tile) = map.get_mut(&Vector::from((0, y))) {
                 tile.set_both(255);
             }
             
-            if let Some(tile) = map.get_mut(width as i32 - 1, y) {
+            if let Some(tile) = map.get_mut(&Vector::from((width as i32 - 1, y))) {
                 tile.set_both(255);
             }
         }
@@ -74,27 +74,29 @@ impl Map {
         Map { width, height, data: vec![Tile::ground(); width * height]}
     }
 
-    pub fn get(&self, x: i32, y: i32) -> Option<&Tile> {
-        let index = self.coords_to_index(x, y)?;
+    pub fn get(&self, position: &Vector) -> Option<&Tile> {
+        let index = self.coords_to_index(position)?;
         self.data.get(index)
     }
 
-    pub fn get_mut(&mut self, x: i32, y: i32) -> Option<&mut Tile> {
-        let index = self.coords_to_index(x, y)?;
+    pub fn get_mut(&mut self, position: &Vector) -> Option<&mut Tile> {
+        let index = self.coords_to_index(position)?;
         self.data.get_mut(index)
     }
 
-    pub unsafe fn get_unchecked(&self, x: i32, y: i32) -> &Tile {
-        let index = self.coords_to_index_unchecked(x, y);
+    pub unsafe fn get_unchecked(&self, position: &Vector) -> &Tile {
+        let index = self.coords_to_index_unchecked(position);
         self.data.get_unchecked(index)
     }
 
-    pub unsafe fn get_unchecked_mut(&mut self, x: i32, y: i32) -> &Tile {
-        let index = self.coords_to_index_unchecked(x, y);
+    pub unsafe fn get_unchecked_mut(&mut self, position: &Vector) -> &Tile {
+        let index = self.coords_to_index_unchecked(position);
         self.data.get_unchecked_mut(index)
     }
 
-    fn coords_to_index(&self, x: i32, y: i32) -> Option<usize> {
+    fn coords_to_index(&self, position: &Vector) -> Option<usize> {
+        let (x, y) = position.tuple();
+        
         let index =  (y * self.width as i32 + x) as usize;
 
         if index < self.data.len() {
@@ -112,7 +114,9 @@ impl Map {
         }
     }
 
-    unsafe fn coords_to_index_unchecked(&self, x: i32, y: i32) -> usize {
+    unsafe fn coords_to_index_unchecked(&self, position: &Vector) -> usize {
+        let (x, y) = position.tuple();
+        
         (y * self.width as i32 + x) as usize
     }
 
@@ -120,9 +124,16 @@ impl Map {
         ((index % self.width) as i32, (index / self.width) as i32)
     }
 
-    fn coords_to_nearest_index(&self, x: i32, y: i32) -> usize {
+    fn coords_to_nearest_index(&self, position: &Vector) -> usize {
+        let (x, y) = position.tuple();
+
         unsafe {
-            self.coords_to_index_unchecked(clamp!(x, 0, self.width as i32), clamp!(y, 0, self.height as i32))
+            self.coords_to_index_unchecked(&Vector::new(clamp!(x, 0, self.width as i32), clamp!(y, 0, self.height as i32)))
         }
+    }
+
+    pub fn in_bounds(&self, position: &Vector) -> bool {
+        let (x, y) = position.tuple();
+        (0 <= x && x < self.width as i32) && (0 <= y && y < self.height as i32)
     }
 }
