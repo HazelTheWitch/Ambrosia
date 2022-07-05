@@ -18,18 +18,12 @@ impl DebugSystem {
 impl System for DebugSystem {
     fn execute(&self, world: &World) {
         for e in world.query_entities(&Query::new().include::<Debug>()) {
-            let name: String;
-
-            match e.get_component::<Named>() {
-                Some(named) => {
-                    name = named.name.to_string();
-                }
-                None => {
-                    name = format!("Entity({})", e.id());
-                }
-            }
-
             if let Some(debug) = e.get_component::<Debug>() {
+                let name: String = match e.get_component::<Named>() {
+                    Some(named) => named.name.to_string(),
+                    None => format!("Entity({})", e.id())
+                };
+
                 if debug.max_level >= self.min_level {
                     if debug.count() > 0 {
                         println!("{}", name);

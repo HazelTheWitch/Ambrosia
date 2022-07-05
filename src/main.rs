@@ -1,6 +1,9 @@
 #![allow(dead_code)]
 #![feature(downcast_unchecked)]
 
+use std::collections::HashMap;
+
+use components::Position;
 use rltk::{Rltk, GameState};
 
 mod map;
@@ -78,32 +81,34 @@ impl GameState for State {
 
         // Entity Rendering
         // First initialize all entity lists to empty vecs
-        let mut entity_lists: Vec<Vec<&ecs::Entity>> = Vec::with_capacity(256);
-
-        for _ in 0..256 {
-            entity_lists.push(Vec::with_capacity(0))
-        }
+        let mut entity_map: HashMap<vectors::Vector, (&Position, &ecs::Entity)> = HashMap::new();
 
         let query = ecs::Query::new().include::<components::Position>().include::<components::SingleGlyphRenderer>();
 
         // Fill the lists according to priotity
         for entity in self.world.query_entities(&query) {
             if let Some(position) = entity.get_component::<components::Position>() {
-                let list = &mut entity_lists[position.priority() as usize];
-                list.push(entity);
+                let pos = position.coords();
+                if let Some((other_position, _)) = entity_map.get(&pos) {
+                    if position.priority() > other_position.priority() {
+                        entity_map.insert(pos, (position, entity));
+                    }
+                } else {
+                    entity_map.insert(pos, (position, entity));
+                }
             }
         }
 
         // Render from least prioritized to most
-        for list in entity_lists {
-            for entity in list {
-                if let (Some(position), Some(renderer)) = (entity.get_component::<components::Position>(), entity.get_component::<components::SingleGlyphRenderer>()) {
-                    let screen_pos = camera_transform.inverse_apply(position.coords());
+        for (position, entity) in entity_map.values() {
+            if let Some(renderer) = (*entity).get_component::<components::SingleGlyphRenderer>() {
+                let screen_pos = camera_transform.inverse_apply(position.coords());
 
-                    ctx.set(screen_pos.x, screen_pos.y, renderer.fg().clone(), renderer.bg().clone(), renderer.glyph().clone());
-                }
+                ctx.set(screen_pos.x, screen_pos.y, renderer.fg().clone(), renderer.bg().clone(), renderer.glyph().clone());
             }
         }
+
+        println!("{}", self.world.entity_count())
     }
 }
 
@@ -112,7 +117,7 @@ fn main() -> rltk::BError {
 
     let context = RltkBuilder::simple(constants::SCREEN_SIZE.x, constants::SCREEN_SIZE.y)?
         .with_title("Ambrosia")
-        .with_fps_cap(30.0)
+        // .with_fps_cap(30.0)
         .build()?;
 
     let mut gs = State::new();

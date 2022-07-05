@@ -3,7 +3,7 @@ use std::{ops::{Add, Sub}, fmt::Display};
 pub const ZERO_VECTOR: Vector = Vector { x: 0, y: 0 };
 pub const ONE_VECTOR: Vector = Vector { x: 1, y: 1 };
 
-#[derive(Clone, Copy, PartialEq)]
+#[derive(Clone, Copy, PartialEq, Eq, Hash)]
 pub struct Vector {
     pub x: i32,
     pub y: i32
