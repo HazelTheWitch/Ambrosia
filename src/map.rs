@@ -10,7 +10,7 @@ use crate::{clamp, constants::MAP_SIZE, vectors::Vector};
 /// This value is subtracted from the light value to determine if a tile is visible
 ///     0:       The tile is copletely visible and lets through all lights
 ///     1 - 255: The tile blocks out some light but will be visible if hit with a ray
-#[derive(PartialEq, Copy, Clone)]
+#[derive(PartialEq, Eq, Copy, Clone)]
 pub struct Tile {
     strength: u8,
     opaqueness: u8,

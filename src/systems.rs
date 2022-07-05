@@ -25,13 +25,11 @@ impl System for DebugSystem {
                     None => format!("Entity({})", e.id()),
                 };
 
-                if debug.max_level >= self.min_level {
-                    if debug.count() > 0 {
-                        println!("{}", name);
+                if debug.max_level >= self.min_level && debug.count() > 0 {
+                    println!("{}", name);
 
-                        for message in debug.messages.values() {
-                            println!("    {}", message);
-                        }
+                    for message in debug.messages.values() {
+                        println!("    {}", message);
                     }
                 }
             }

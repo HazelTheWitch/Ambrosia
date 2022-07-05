@@ -49,7 +49,7 @@ impl Position {
 }
 
 #[repr(u8)]
-#[derive(Copy, Clone, PartialEq, PartialOrd)]
+#[derive(Copy, Clone, PartialEq, Eq, PartialOrd)]
 pub enum DebugLevel {
     None = 0,
     Info = 1,
@@ -201,7 +201,7 @@ impl Viewshed {
             for y in top..=bottom {
                 let pos = Vector::new(x, y);
 
-                let dist = pos.distance(&center);
+                let dist = pos.distance(center);
 
                 if dist <= self.view_distance {
                     // We are in the visiblity circle

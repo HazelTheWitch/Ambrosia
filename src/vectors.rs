@@ -74,7 +74,7 @@ impl Vector {
 
         let mut points = Vec::new();
 
-        points.push(a.clone());
+        points.push(*a);
 
         let (mut x, mut y) = a.tuple();
 

@@ -21,8 +21,8 @@ impl DynamicStore {
     pub fn insert<T: Any>(&mut self, data: T) -> Result<&mut Self, ECSError> {
         let id = data.type_id();
 
-        if !self.data.contains_key(&id) {
-            self.data.insert(id, UnsafeCell::new(Box::new(data)));
+        if let std::collections::hash_map::Entry::Vacant(e) = self.data.entry(id) {
+            e.insert(UnsafeCell::new(Box::new(data)));
 
             Ok(self)
         } else {
@@ -171,7 +171,7 @@ impl Add for Query {
     type Output = Query;
 
     fn add(self, rhs: Self) -> Self::Output {
-        let mut clone = self.clone();
+        let mut clone = self;
         clone.join(rhs);
         clone
     }

@@ -148,7 +148,7 @@ impl GameState for State {
             if let Some(renderer) = (*entity).get_component::<components::SingleGlyphRenderer>() {
                 let screen_pos = camera_transform.inverse_apply(position.coords());
 
-                ctx.set(screen_pos.x, screen_pos.y, renderer.fg().clone(), renderer.bg().clone(), renderer.glyph().clone());
+                ctx.set(screen_pos.x, screen_pos.y, renderer.fg(), renderer.bg(), renderer.glyph());
             }
         }
 

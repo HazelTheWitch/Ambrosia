@@ -43,12 +43,12 @@ pub fn renderable<'w>(
     ))
 }
 
-pub fn player<'w>(
-    entity: Result<&'w mut Entity, ECSError>,
+pub fn player(
+    entity: Result<&mut Entity, ECSError>,
     name: String,
     x: i32,
     y: i32,
-) -> Result<&'w mut Entity, ECSError> {
+) -> Result<&mut Entity, ECSError> {
     renderable(
         debugged(entity, name),
         x,
