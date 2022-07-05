@@ -9,7 +9,8 @@ pub const PLAYER_GLYPH: char = '@';
 // Colors
 pub const PLAYER_COLOR: (u8, u8, u8) = rltk::YELLOW;
 pub const UI_COLOR: (u8, u8, u8) = rltk::GRAY90;
-pub const TERRAIN_COLOR: (u8, u8, u8) = rltk::GRAY55;
+pub const TERRAIN_COLOR_VISIBLE: (u8, u8, u8) = rltk::GRAY70;
+pub const TERRAIN_COLOR_DISCOVERED: (u8, u8, u8) = rltk::GRAY30;
 
 pub const BACKGROUND_COLOR: (u8, u8, u8) = rltk::GRAY4;
 

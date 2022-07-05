@@ -27,5 +27,6 @@ pub fn player<'w>(entity: Result<&'w mut Entity, ECSError>, name: String, x: i32
         debugged(entity, name), 
         x, y, 255, PLAYER_GLYPH, PLAYER_COLOR, BACKGROUND_COLOR)?
         .insert_component(Camera::new())?
-        .insert_component(Player::new())
+        .insert_component(Player::new())?
+        .insert_component(Viewshed::new(11.5))
 }

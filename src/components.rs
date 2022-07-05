@@ -1,7 +1,7 @@
-use std::{collections::HashMap, fmt::Display};
+use std::{collections::{HashMap, HashSet}, fmt::{Display, DebugTuple}};
 use rltk::RGB;
 
-use crate::vectors::Vector;
+use crate::{vectors::Vector, map::{Map, RaycastMode}};
 
 #[derive(Copy, Clone, PartialEq)]
 pub struct Position {
@@ -20,6 +20,22 @@ impl Position {
 
     pub fn priority(&self) -> u8 {
         self.priority
+    }
+
+    pub fn try_move(&mut self, map: &Map, delta: Vector) -> bool {
+        self.try_set(map, self.position + delta)
+    }
+
+    pub fn try_set(&mut self, map: &Map, new_position: Vector) -> bool {
+        if let Some(tile) = map.get(&new_position) {
+            if tile.walkable() {
+                self.position = new_position;
+
+                return true;
+            }
+        }
+
+        false
     }
 }
 
@@ -126,5 +142,70 @@ pub struct Player { }
 impl Player {
     pub fn new() -> Self {
         Player { }
+    }
+}
+
+pub struct Viewshed {
+    pub view_distance: f32,
+    dirty: bool,
+    visible: HashSet<Vector>
+}
+
+impl Viewshed {
+    pub fn new(view_distance: f32) -> Self {
+        Viewshed { view_distance, dirty: true, visible: HashSet::new() }
+    }
+
+    pub fn mark_dirty(&mut self) {
+        self.dirty = true;
+    }
+
+    /// Update the viewshed, returns true iff the view was recalculated
+    pub fn update(&mut self, map: &mut Map, center: &Vector, mark_discovered: bool) -> bool {
+        if !self.dirty {
+            return false;
+        }
+
+        self.dirty = false;
+        self.visible = HashSet::new();
+
+        let (top, bottom, left, right) = (
+            (center.y as f32 - self.view_distance).floor() as i32,
+            (center.y as f32 + self.view_distance).ceil() as i32,
+            (center.x as f32 - self.view_distance).floor() as i32,
+            (center.x as f32 + self.view_distance).ceil() as i32
+        );
+
+        for x in left..=right {
+            for y in top..=bottom {
+                let pos = Vector::new(x, y);
+
+                let dist = pos.distance(&center);
+
+                if dist <= self.view_distance {  // We are in the visiblity circle
+                    let (hit, distance) = map.raycast(center, &pos, RaycastMode::Visibility);
+
+                    if !hit || dist == distance {
+                        if let Some(tile) = map.get_mut(&pos) {
+                            self.visible.insert(pos);
+                
+                            if mark_discovered {
+                                tile.discover();
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        true
+    }
+
+    pub fn contains(&self, pos: &Vector) -> bool {
+        self.visible.contains(pos)
+    }
+
+    pub fn visible(&self) -> HashSet<Vector> {
+        self.visible.clone()
     }
 }

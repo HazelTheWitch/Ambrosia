@@ -13,12 +13,13 @@ use crate::{clamp, vectors::Vector, constants::MAP_SIZE};
 #[derive(PartialEq, Copy, Clone)]
 pub struct Tile {
     strength: u8,
-    opaqueness: u8
+    opaqueness: u8,
+    discovered: bool
 }
 
 impl Tile {
     pub fn new(strength: u8, opaqueness: u8) -> Self {
-        Tile { strength, opaqueness }
+        Tile { strength, opaqueness, discovered: false }
     }
 
     pub fn ground() -> Self {
@@ -40,6 +41,14 @@ impl Tile {
 
     pub fn walkable(&self) -> bool {
         self.strength == 0
+    }
+
+    pub fn discover(&mut self) {
+        self.discovered = true;
+    }
+
+    pub fn discovered(&self) -> bool {
+        self.discovered
     }
 }
 
@@ -179,4 +188,36 @@ impl Map {
         let (x, y) = position.tuple();
         (0 <= x && x < self.width as i32) && (0 <= y && y < self.height as i32)
     }
+
+    pub fn raycast(&self, start: &Vector, end: &Vector, mode: RaycastMode) -> (bool, f32) {
+        let mut light: u8 = 255;
+
+        for point in Vector::line(start, end) {
+            if let Some(tile) = self.get(&point) {
+                match mode {
+                    RaycastMode::Visibility => {
+                        if tile.opaqueness > light {
+                            return (true, start.distance(&point));
+                        }
+
+                        light -= tile.opaqueness;
+                    },
+                    RaycastMode::Walkable => {
+                        if !tile.walkable() {
+                            return (true, start.distance(&point));
+                        }
+                    }
+                }
+            } else {
+                return (true, start.distance(&point));
+            }
+        }
+
+        (false, start.distance(end))
+    }
+}
+
+pub enum RaycastMode {
+    Walkable,
+    Visibility
 }

@@ -177,7 +177,7 @@ impl Add for Query {
 
 pub struct World {
     entities: Vec<Option<Entity>>,
-    systems: Vec<Box<dyn System>>,
+    systems: Vec<(Box<dyn System>, i32)>,
     resources: DynamicStore
 }
 
@@ -245,13 +245,23 @@ impl World {
         self.entities[id] = None;
     }
 
-    pub fn add_system(&mut self, system: Box<dyn System>) -> &mut Self {
-        self.systems.push(system);
+    pub fn add_system(&mut self, system: Box<dyn System>, priority: i32) -> &mut Self {
+        let mut index = 0;
+
+        while let Some((_, other_priority)) = self.systems.get(index) {
+            if other_priority <= &priority {
+                break;
+            }
+
+            index += 1;
+        }
+
+        self.systems.insert(index, (system, priority));
         self
     }
 
     pub fn tick(&self) {
-        for system in self.systems.iter() {
+        for (system, _) in self.systems.iter() {
             system.execute(self)
         }
     }

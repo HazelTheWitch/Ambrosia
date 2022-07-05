@@ -19,7 +19,7 @@ macro_rules! clamp {
 
 #[macro_export]
 macro_rules! add_system {
-    ($world: expr, $system: expr) => {
-        $world.add_system(std::boxed::Box::new($system))
+    ($world: expr, $system: expr, $priority: expr) => {
+        $world.add_system(std::boxed::Box::new($system), $priority)
     };
 }

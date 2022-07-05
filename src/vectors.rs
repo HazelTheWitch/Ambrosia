@@ -17,6 +17,44 @@ impl Vector {
     pub fn tuple(&self) -> (i32, i32) {
         (self.x, self.y)
     }
+
+    pub fn distance(&self, other: &Vector) -> f32 {
+        let (x0, y0) = self.tuple();
+        let (x1, y1) = other.tuple();
+
+        let (dx, dy) = (x0 - x1, y0 - y1);
+
+        ((dx * dx + dy * dy) as f32).sqrt()
+    }
+
+    pub fn lerp(a: &Vector, b: &Vector, t: f32) -> Vector {
+        let (a_x, a_y) = (a.x as f32, a.y as f32);
+        let (b_x, b_y) = (b.x as f32, b.y as f32);
+        
+        Vector::new((a_x + t * (b_x - a_x)).round() as i32, (a_y + t * (b_y - a_y)).round() as i32)
+    }
+
+    pub fn line(a: &Vector, b: &Vector) -> Vec<Vector> {
+        let mut points = Vec::new();
+
+        let N = a.distance(b).ceil() as i32 * 10;
+
+        for i in 0..N {
+            let t = (i as f32) / ((N - 1) as f32);
+
+            let next = Vector::lerp(a, b, t);
+
+            if let Some(last) = points.last() {
+                if &next != last {
+                    points.push(next);
+                }
+            } else {
+                points.push(next);
+            }
+    }
+
+        points
+    }
 }
 
 impl From<(i32, i32)> for Vector {
