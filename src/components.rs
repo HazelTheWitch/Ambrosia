@@ -1,4 +1,4 @@
-use std::{collections::{HashMap, HashSet}, fmt::{Display, DebugTuple}};
+use std::{collections::{HashMap, HashSet}, fmt::Display};
 use rltk::RGB;
 
 use crate::{vectors::Vector, map::{Map, RaycastMode}};

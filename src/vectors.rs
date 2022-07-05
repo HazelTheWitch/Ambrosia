@@ -34,13 +34,13 @@ impl Vector {
         Vector::new((a_x + t * (b_x - a_x)).round() as i32, (a_y + t * (b_y - a_y)).round() as i32)
     }
 
-    pub fn line(a: &Vector, b: &Vector) -> Vec<Vector> {
+    pub fn line_lerp(a: &Vector, b: &Vector) -> Vec<Vector> {
         let mut points = Vec::new();
 
-        let N = a.distance(b).ceil() as i32 * 10;
+        let n = a.distance(b).ceil() as i32 * 10;
 
-        for i in 0..N {
-            let t = (i as f32) / ((N - 1) as f32);
+        for i in 0..n {
+            let t = (i as f32) / ((n - 1) as f32);
 
             let next = Vector::lerp(a, b, t);
 
@@ -51,7 +51,41 @@ impl Vector {
             } else {
                 points.push(next);
             }
+        }
+
+        points
     }
+
+    pub fn line(a: &Vector, b: &Vector) -> Vec<Vector> {
+        let dx = b.x - a.x;
+        let dy = b.y - a.y;
+
+        let nx = dx.abs();
+        let ny = dy.abs();
+
+        let sx = dx.signum();
+        let sy = dy.signum();
+
+        let mut points = Vec::new();
+
+        points.push(a.clone());
+
+        let (mut x, mut y) = a.tuple();
+
+        let mut ix = 0;
+        let mut iy = 0;
+
+        while ix < nx || iy < ny {
+            if (1 + 2*ix) * ny < (1 + 2*iy) * nx {
+                x += sx;
+                ix += 1;
+            } else {
+                y += sy;
+                iy += 1;
+            }
+
+            points.push(Vector::new(x, y));
+        }
 
         points
     }

@@ -93,8 +93,8 @@ impl Map {
         let middle = Vector::new((MAP_SIZE.0 / 2) as i32, (MAP_SIZE.1 / 2) as i32);
 
         for _i in 0..(MAP_SIZE.0 * MAP_SIZE.1 / 5) {
-            let x = rng.roll_dice(1, MAP_SIZE.0 as i32);
-            let y = rng.roll_dice(1, MAP_SIZE.1 as i32);
+            let x = rng.roll_dice(1, MAP_SIZE.0 as i32 - 1);
+            let y = rng.roll_dice(1, MAP_SIZE.1 as i32 - 1);
 
             let pos = Vector::new(x, y);
 
