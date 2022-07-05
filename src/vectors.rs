@@ -1,4 +1,7 @@
-use std::{ops::{Add, Sub}, fmt::Display};
+use std::{
+    fmt::Display,
+    ops::{Add, Sub},
+};
 
 pub const ZERO_VECTOR: Vector = Vector { x: 0, y: 0 };
 pub const ONE_VECTOR: Vector = Vector { x: 1, y: 1 };
@@ -6,7 +9,7 @@ pub const ONE_VECTOR: Vector = Vector { x: 1, y: 1 };
 #[derive(Clone, Copy, PartialEq, Eq, Hash)]
 pub struct Vector {
     pub x: i32,
-    pub y: i32
+    pub y: i32,
 }
 
 impl Vector {
@@ -30,8 +33,11 @@ impl Vector {
     pub fn lerp(a: &Vector, b: &Vector, t: f32) -> Vector {
         let (a_x, a_y) = (a.x as f32, a.y as f32);
         let (b_x, b_y) = (b.x as f32, b.y as f32);
-        
-        Vector::new((a_x + t * (b_x - a_x)).round() as i32, (a_y + t * (b_y - a_y)).round() as i32)
+
+        Vector::new(
+            (a_x + t * (b_x - a_x)).round() as i32,
+            (a_y + t * (b_y - a_y)).round() as i32,
+        )
     }
 
     pub fn line_lerp(a: &Vector, b: &Vector) -> Vec<Vector> {
@@ -76,7 +82,7 @@ impl Vector {
         let mut iy = 0;
 
         while ix < nx || iy < ny {
-            if (1 + 2*ix) * ny < (1 + 2*iy) * nx {
+            if (1 + 2 * ix) * ny < (1 + 2 * iy) * nx {
                 x += sx;
                 ix += 1;
             } else {
@@ -93,7 +99,10 @@ impl Vector {
 
 impl From<(i32, i32)> for Vector {
     fn from(tuple: (i32, i32)) -> Self {
-        Vector { x: tuple.0, y: tuple.1 }
+        Vector {
+            x: tuple.0,
+            y: tuple.1,
+        }
     }
 }
 
@@ -101,7 +110,10 @@ impl Add for Vector {
     type Output = Vector;
 
     fn add(self, rhs: Self) -> Self::Output {
-        Vector { x: self.x + rhs.x, y: self.y + rhs.y }
+        Vector {
+            x: self.x + rhs.x,
+            y: self.y + rhs.y,
+        }
     }
 }
 
@@ -109,7 +121,10 @@ impl Sub for Vector {
     type Output = Vector;
 
     fn sub(self, rhs: Self) -> Self::Output {
-        Vector { x: self.x - rhs.x, y: self.y - rhs.y }
+        Vector {
+            x: self.x - rhs.x,
+            y: self.y - rhs.y,
+        }
     }
 }
 

@@ -1,5 +1,5 @@
 use std::any::{Any, TypeId};
-use std::cell:: UnsafeCell;
+use std::cell::UnsafeCell;
 use std::collections::HashMap;
 use std::ops::Add;
 
@@ -8,12 +8,14 @@ pub trait System {
 }
 
 struct DynamicStore {
-    data: HashMap<TypeId, UnsafeCell<Box<dyn Any>>>
+    data: HashMap<TypeId, UnsafeCell<Box<dyn Any>>>,
 }
 
 impl DynamicStore {
     pub fn new() -> Self {
-        DynamicStore { data: HashMap::new() }
+        DynamicStore {
+            data: HashMap::new(),
+        }
     }
 
     pub fn insert<T: Any>(&mut self, data: T) -> Result<&mut Self, ECSError> {
@@ -21,7 +23,7 @@ impl DynamicStore {
 
         if !self.data.contains_key(&id) {
             self.data.insert(id, UnsafeCell::new(Box::new(data)));
-            
+
             Ok(self)
         } else {
             Err(ECSError::DataAlreadyExists)
@@ -43,17 +45,13 @@ impl DynamicStore {
     pub fn get<T: Any>(&self) -> Option<&T> {
         let cell = self.get_cell::<T>()?;
 
-        unsafe {
-            (*cell.get()).downcast_ref::<T>()
-        }
+        unsafe { (*cell.get()).downcast_ref::<T>() }
     }
 
     pub fn get_mut<T: Any>(&self) -> Option<&mut T> {
         let cell = self.get_cell::<T>()?;
 
-        unsafe {
-            (*cell.get()).downcast_mut::<T>()
-        }
+        unsafe { (*cell.get()).downcast_mut::<T>() }
     }
 
     pub unsafe fn get_unchecked<T: Any>(&self) -> &T {
@@ -71,12 +69,15 @@ impl DynamicStore {
 
 pub struct Entity {
     id: usize,
-    components: DynamicStore
+    components: DynamicStore,
 }
 
 impl Entity {
     pub fn new(id: usize) -> Self {
-        Entity { id, components: DynamicStore::new() }
+        Entity {
+            id,
+            components: DynamicStore::new(),
+        }
     }
 
     pub fn insert_component<T: Any>(&mut self, component: T) -> Result<&mut Self, ECSError> {
@@ -113,16 +114,18 @@ impl Entity {
     }
 }
 
-
 #[derive(Clone)]
 pub struct Query {
     includes: Vec<TypeId>,
-    excludes: Vec<TypeId>
+    excludes: Vec<TypeId>,
 }
 
 impl Query {
     pub fn new() -> Self {
-        Query { includes: Vec::new(), excludes: Vec::new() }
+        Query {
+            includes: Vec::new(),
+            excludes: Vec::new(),
+        }
     }
 
     pub fn include<T: Any>(mut self) -> Self {
@@ -174,16 +177,19 @@ impl Add for Query {
     }
 }
 
-
 pub struct World {
     entities: Vec<Option<Entity>>,
     systems: Vec<(Box<dyn System>, i32)>,
-    resources: DynamicStore
+    resources: DynamicStore,
 }
 
 impl World {
     pub fn new() -> Self {
-        World { entities: Vec::new(), systems: Vec::new(), resources: DynamicStore::new() }
+        World {
+            entities: Vec::new(),
+            systems: Vec::new(),
+            resources: DynamicStore::new(),
+        }
     }
 
     pub fn spawn(&mut self) -> Result<&mut Entity, ECSError> {
@@ -191,13 +197,11 @@ impl World {
         let id = entity.id;
         self.entities.push(Some(entity));
         match self.entities.get_mut(id) {
-            Some(entity) => {
-                match entity {
-                    Some(entity) => Ok(entity),
-                    None => Err(ECSError::CouldNotSpawn)
-                }
+            Some(entity) => match entity {
+                Some(entity) => Ok(entity),
+                None => Err(ECSError::CouldNotSpawn),
             },
-            None => Err(ECSError::CouldNotSpawn)
+            None => Err(ECSError::CouldNotSpawn),
         }
     }
 
@@ -213,16 +217,16 @@ impl World {
         }
     }
 
-    pub fn iter(&self) -> impl Iterator<Item=&Entity> {
+    pub fn iter(&self) -> impl Iterator<Item = &Entity> {
         self.entities.iter().flatten()
     }
 
-    pub fn iter_mut(&mut self) -> impl Iterator<Item=&mut Entity> {
+    pub fn iter_mut(&mut self) -> impl Iterator<Item = &mut Entity> {
         self.entities.iter_mut().flatten()
     }
 
     pub fn query_entities<'a>(&'a self, query: &'a Query) -> impl Iterator<Item = &'a Entity> {
-        self.iter().filter(|entity| { query.contains(entity) })
+        self.iter().filter(|entity| query.contains(entity))
     }
 
     pub fn query_one_entity<'a>(&'a self, query: &'a Query) -> Option<&Entity> {
@@ -299,7 +303,6 @@ impl World {
         self.entities.len()
     }
 }
-
 
 pub enum ECSError {
     DataAlreadyExists,

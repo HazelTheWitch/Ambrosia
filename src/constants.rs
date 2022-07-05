@@ -16,6 +16,12 @@ pub const BACKGROUND_COLOR: (u8, u8, u8) = rltk::GRAY4;
 
 // UI
 pub const SCREEN_SIZE: Vector = Vector { x: 120, y: 80 };
-pub const SCREEN_SIZE_2: Vector = Vector { x: SCREEN_SIZE.x / 2, y: SCREEN_SIZE.y / 2 };
+pub const SCREEN_SIZE_2: Vector = Vector {
+    x: SCREEN_SIZE.x / 2,
+    y: SCREEN_SIZE.y / 2,
+};
 pub const CORNER_POINT: Vector = Vector { x: 80, y: 60 };
-pub const CORNER_POINT_2: Vector = Vector { x: CORNER_POINT.x / 2, y: CORNER_POINT.y / 2 };
+pub const CORNER_POINT_2: Vector = Vector {
+    x: CORNER_POINT.x / 2,
+    y: CORNER_POINT.y / 2,
+};

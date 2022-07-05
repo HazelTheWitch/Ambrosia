@@ -1,17 +1,26 @@
-use std::{collections::{HashMap, HashSet}, fmt::Display};
 use rltk::RGB;
+use std::{
+    collections::{HashMap, HashSet},
+    fmt::Display,
+};
 
-use crate::{vectors::Vector, map::{Map, RaycastMode}};
+use crate::{
+    map::{Map, RaycastMode},
+    vectors::Vector,
+};
 
 #[derive(Copy, Clone, PartialEq)]
 pub struct Position {
     position: Vector,
-    priority: u8
+    priority: u8,
 }
 
 impl Position {
     pub fn new(x: i32, y: i32, priority: u8) -> Self {
-        Position { position: Vector::new(x, y), priority }
+        Position {
+            position: Vector::new(x, y),
+            priority,
+        }
     }
 
     pub fn coords(&self) -> Vector {
@@ -46,18 +55,22 @@ pub enum DebugLevel {
     Info = 1,
     Warning = 2,
     Error = 3,
-    Critical = 4
+    Critical = 4,
 }
 
 pub struct DebugMessage {
     pub level: DebugLevel,
     pub reason: String,
-    pub message: String
+    pub message: String,
 }
 
 impl DebugMessage {
     pub fn new(level: DebugLevel, reason: String, message: String) -> Self {
-        DebugMessage { level, reason, message }
+        DebugMessage {
+            level,
+            reason,
+            message,
+        }
     }
 }
 
@@ -69,12 +82,15 @@ impl Display for DebugMessage {
 
 pub struct Debug {
     pub max_level: DebugLevel,
-    pub messages: HashMap<String, DebugMessage>
+    pub messages: HashMap<String, DebugMessage>,
 }
 
 impl Debug {
     pub fn new() -> Self {
-        Debug { max_level: DebugLevel::None, messages: HashMap::new() }
+        Debug {
+            max_level: DebugLevel::None,
+            messages: HashMap::new(),
+        }
     }
 
     pub fn clear(&mut self) {
@@ -87,7 +103,8 @@ impl Debug {
             self.max_level = level;
         }
 
-        self.messages.insert(reason.to_owned(), DebugMessage::new(level, reason, message));
+        self.messages
+            .insert(reason.to_owned(), DebugMessage::new(level, reason, message));
     }
 
     pub fn count(&self) -> usize {
@@ -96,7 +113,7 @@ impl Debug {
 }
 
 pub struct Named {
-    pub name: String
+    pub name: String,
 }
 
 impl Named {
@@ -108,7 +125,7 @@ impl Named {
 pub struct SingleGlyphRenderer {
     glyph: rltk::FontCharType,
     fg: RGB,
-    bg: RGB
+    bg: RGB,
 }
 
 impl SingleGlyphRenderer {
@@ -129,31 +146,35 @@ impl SingleGlyphRenderer {
     }
 }
 
-pub struct Camera { }
+pub struct Camera {}
 
 impl Camera {
     pub fn new() -> Self {
-        Camera { }
+        Camera {}
     }
 }
 
-pub struct Player { }
+pub struct Player {}
 
 impl Player {
     pub fn new() -> Self {
-        Player { }
+        Player {}
     }
 }
 
 pub struct Viewshed {
     pub view_distance: f32,
     dirty: bool,
-    visible: HashSet<Vector>
+    visible: HashSet<Vector>,
 }
 
 impl Viewshed {
     pub fn new(view_distance: f32) -> Self {
-        Viewshed { view_distance, dirty: true, visible: HashSet::new() }
+        Viewshed {
+            view_distance,
+            dirty: true,
+            visible: HashSet::new(),
+        }
     }
 
     pub fn mark_dirty(&mut self) {
@@ -173,7 +194,7 @@ impl Viewshed {
             (center.y as f32 - self.view_distance).floor() as i32,
             (center.y as f32 + self.view_distance).ceil() as i32,
             (center.x as f32 - self.view_distance).floor() as i32,
-            (center.x as f32 + self.view_distance).ceil() as i32
+            (center.x as f32 + self.view_distance).ceil() as i32,
         );
 
         for x in left..=right {
@@ -182,13 +203,14 @@ impl Viewshed {
 
                 let dist = pos.distance(&center);
 
-                if dist <= self.view_distance {  // We are in the visiblity circle
+                if dist <= self.view_distance {
+                    // We are in the visiblity circle
                     let (hit, distance) = map.raycast(center, &pos, RaycastMode::Visibility);
 
                     if !hit || dist == distance {
                         if let Some(tile) = map.get_mut(&pos) {
                             self.visible.insert(pos);
-                
+
                             if mark_discovered {
                                 tile.discover();
                             }

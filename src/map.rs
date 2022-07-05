@@ -1,6 +1,6 @@
 use std::fmt::Display;
 
-use crate::{clamp, vectors::Vector, constants::MAP_SIZE};
+use crate::{clamp, constants::MAP_SIZE, vectors::Vector};
 
 /// Represents a tile
 /// Strength:
@@ -14,12 +14,16 @@ use crate::{clamp, vectors::Vector, constants::MAP_SIZE};
 pub struct Tile {
     strength: u8,
     opaqueness: u8,
-    discovered: bool
+    discovered: bool,
 }
 
 impl Tile {
     pub fn new(strength: u8, opaqueness: u8) -> Self {
-        Tile { strength, opaqueness, discovered: false }
+        Tile {
+            strength,
+            opaqueness,
+            discovered: false,
+        }
     }
 
     pub fn ground() -> Self {
@@ -61,7 +65,7 @@ impl Display for Tile {
 pub struct Map {
     pub width: usize,
     pub height: usize,
-    data: Vec<Tile>
+    data: Vec<Tile>,
 }
 
 impl Map {
@@ -72,7 +76,7 @@ impl Map {
             if let Some(tile) = map.get_mut(&Vector::from((x, 0))) {
                 tile.set_both(255);
             }
-            
+
             if let Some(tile) = map.get_mut(&Vector::from((x, height as i32 - 1))) {
                 tile.set_both(255);
             }
@@ -82,7 +86,7 @@ impl Map {
             if let Some(tile) = map.get_mut(&Vector::from((0, y))) {
                 tile.set_both(255);
             }
-            
+
             if let Some(tile) = map.get_mut(&Vector::from((width as i32 - 1, y))) {
                 tile.set_both(255);
             }
@@ -109,7 +113,11 @@ impl Map {
     }
 
     pub fn empty(width: usize, height: usize) -> Self {
-        Map { width, height, data: vec![Tile::ground(); width * height]}
+        Map {
+            width,
+            height,
+            data: vec![Tile::ground(); width * height],
+        }
     }
 
     pub fn get(&self, position: &Vector) -> Option<&Tile> {
@@ -119,7 +127,7 @@ impl Map {
 
         unsafe {
             let index = self.coords_to_index_unchecked(position);
-        
+
             self.data.get(index)
         }
     }
@@ -131,7 +139,7 @@ impl Map {
 
         unsafe {
             let index = self.coords_to_index_unchecked(position);
-        
+
             self.data.get_mut(index)
         }
     }
@@ -148,8 +156,8 @@ impl Map {
 
     fn coords_to_index(&self, position: &Vector) -> Option<usize> {
         let (x, y) = position.tuple();
-        
-        let index =  (y * self.width as i32 + x) as usize;
+
+        let index = (y * self.width as i32 + x) as usize;
 
         if index < self.data.len() {
             Some(index)
@@ -168,7 +176,7 @@ impl Map {
 
     unsafe fn coords_to_index_unchecked(&self, position: &Vector) -> usize {
         let (x, y) = position.tuple();
-        
+
         (y * self.width as i32 + x) as usize
     }
 
@@ -180,7 +188,10 @@ impl Map {
         let (x, y) = position.tuple();
 
         unsafe {
-            self.coords_to_index_unchecked(&Vector::new(clamp!(x, 0, self.width as i32), clamp!(y, 0, self.height as i32)))
+            self.coords_to_index_unchecked(&Vector::new(
+                clamp!(x, 0, self.width as i32),
+                clamp!(y, 0, self.height as i32),
+            ))
         }
     }
 
@@ -201,7 +212,7 @@ impl Map {
                         }
 
                         light -= tile.opaqueness;
-                    },
+                    }
                     RaycastMode::Walkable => {
                         if !tile.walkable() {
                             return (true, start.distance(&point));
@@ -219,5 +230,5 @@ impl Map {
 
 pub enum RaycastMode {
     Walkable,
-    Visibility
+    Visibility,
 }

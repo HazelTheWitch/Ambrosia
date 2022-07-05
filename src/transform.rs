@@ -1,7 +1,7 @@
 use crate::vectors::Vector;
 
 pub struct Transform {
-    offset: Vector
+    offset: Vector,
 }
 
 impl Transform {
