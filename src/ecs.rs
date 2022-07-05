@@ -284,6 +284,10 @@ impl World {
     pub unsafe fn get_resource_mut_unchecked<T: Any>(&self) -> &mut T {
         self.resources.get_mut_unchecked::<T>()
     }
+
+    pub fn entity_count(&self) -> usize {
+        self.entities.len()
+    }
 }
 
 

@@ -1,4 +1,6 @@
-use crate::{clamp, vectors::Vector};
+use std::fmt::Display;
+
+use crate::{clamp, vectors::Vector, constants::MAP_SIZE};
 
 /// Represents a tile
 /// Strength:
@@ -35,6 +37,16 @@ impl Tile {
         self.strength = value;
         self.opaqueness = value;
     }
+
+    pub fn walkable(&self) -> bool {
+        self.strength == 0
+    }
+}
+
+impl Display for Tile {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "Tile(s={},o={})", self.strength, self.opaqueness)
+    }
 }
 
 pub struct Map {
@@ -67,6 +79,23 @@ impl Map {
             }
         }
 
+        let mut rng = rltk::RandomNumberGenerator::new();
+
+        let middle = Vector::new((MAP_SIZE.0 / 2) as i32, (MAP_SIZE.1 / 2) as i32);
+
+        for _i in 0..(MAP_SIZE.0 * MAP_SIZE.1 / 5) {
+            let x = rng.roll_dice(1, MAP_SIZE.0 as i32);
+            let y = rng.roll_dice(1, MAP_SIZE.1 as i32);
+
+            let pos = Vector::new(x, y);
+
+            if pos != middle {
+                if let Some(tile) = map.get_mut(&pos) {
+                    tile.set_both(255);
+                }
+            }
+        }
+
         map
     }
 
@@ -75,13 +104,27 @@ impl Map {
     }
 
     pub fn get(&self, position: &Vector) -> Option<&Tile> {
-        let index = self.coords_to_index(position)?;
-        self.data.get(index)
+        if !self.in_bounds(position) {
+            return None;
+        }
+
+        unsafe {
+            let index = self.coords_to_index_unchecked(position);
+        
+            self.data.get(index)
+        }
     }
 
     pub fn get_mut(&mut self, position: &Vector) -> Option<&mut Tile> {
-        let index = self.coords_to_index(position)?;
-        self.data.get_mut(index)
+        if !self.in_bounds(position) {
+            return None;
+        }
+
+        unsafe {
+            let index = self.coords_to_index_unchecked(position);
+        
+            self.data.get_mut(index)
+        }
     }
 
     pub unsafe fn get_unchecked(&self, position: &Vector) -> &Tile {

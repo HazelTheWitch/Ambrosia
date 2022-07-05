@@ -5,16 +5,21 @@ use crate::vectors::Vector;
 
 #[derive(Copy, Clone, PartialEq)]
 pub struct Position {
-    position: Vector
+    position: Vector,
+    priority: u8
 }
 
 impl Position {
-    pub fn new(x: i32, y: i32) -> Self {
-        Position { position: Vector::new(x, y) }
+    pub fn new(x: i32, y: i32, priority: u8) -> Self {
+        Position { position: Vector::new(x, y), priority }
     }
 
     pub fn coords(&self) -> Vector {
         self.position
+    }
+
+    pub fn priority(&self) -> u8 {
+        self.priority
     }
 }
 
@@ -84,15 +89,27 @@ impl Named {
     }
 }
 
-pub struct Renderer {
+pub struct SingleGlyphRenderer {
     glyph: rltk::FontCharType,
     fg: RGB,
     bg: RGB
 }
 
-impl Renderer {
+impl SingleGlyphRenderer {
     pub fn new(glyph: rltk::FontCharType, fg: RGB, bg: RGB) -> Self {
-        Renderer { glyph, fg, bg }
+        SingleGlyphRenderer { glyph, fg, bg }
+    }
+
+    pub fn glyph(&self) -> rltk::FontCharType {
+        self.glyph
+    }
+
+    pub fn fg(&self) -> RGB {
+        self.fg
+    }
+
+    pub fn bg(&self) -> RGB {
+        self.bg
     }
 }
 
@@ -101,5 +118,13 @@ pub struct Camera { }
 impl Camera {
     pub fn new() -> Self {
         Camera { }
+    }
+}
+
+pub struct Player { }
+
+impl Player {
+    pub fn new() -> Self {
+        Player { }
     }
 }

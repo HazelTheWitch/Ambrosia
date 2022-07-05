@@ -1,4 +1,4 @@
-use std::ops::{Add, Sub, Mul};
+use std::{ops::{Add, Sub}, fmt::Display};
 
 pub const ZERO_VECTOR: Vector = Vector { x: 0, y: 0 };
 pub const ONE_VECTOR: Vector = Vector { x: 1, y: 1 };
@@ -38,5 +38,11 @@ impl Sub for Vector {
 
     fn sub(self, rhs: Self) -> Self::Output {
         Vector { x: self.x - rhs.x, y: self.y - rhs.y }
+    }
+}
+
+impl Display for Vector {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "<{}, {}>", self.x, self.y)
     }
 }
