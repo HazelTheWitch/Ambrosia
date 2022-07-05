@@ -9,7 +9,7 @@ use crate::{
     vectors::Vector,
 };
 
-#[derive(Copy, Clone, PartialEq)]
+#[derive(Copy, Clone, PartialEq, Eq)]
 pub struct Position {
     position: Vector,
     priority: u8,

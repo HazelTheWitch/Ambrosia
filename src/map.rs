@@ -202,12 +202,13 @@ impl Map {
 
     pub fn raycast(&self, start: &Vector, end: &Vector, mode: RaycastMode) -> (bool, f32) {
         let mut light: u8 = 255;
+        let mut last: Option<Vector> = None;
 
         for point in Vector::line(start, end) {
             if let Some(tile) = self.get(&point) {
                 match mode {
                     RaycastMode::Visibility => {
-                        if tile.opaqueness > light {
+                        if tile.opaqueness >= light {
                             return (true, start.distance(&point));
                         }
 
@@ -215,8 +216,13 @@ impl Map {
                     }
                     RaycastMode::Walkable => {
                         if !tile.walkable() {
-                            return (true, start.distance(&point));
+                            return match last {
+                                Some(last) => (true, start.distance(&last)),
+                                None => (true, start.distance(&point))
+                            };
                         }
+
+                        last = Some(point);
                     }
                 }
             } else {

@@ -1,7 +1,7 @@
 use crate::vectors::Vector;
 
 // Map
-pub const MAP_SIZE: (usize, usize) = (40, 40);
+pub const MAP_SIZE: (usize, usize) = (100, 100);
 
 // Glyphs
 pub const PLAYER_GLYPH: char = '@';
