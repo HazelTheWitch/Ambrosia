@@ -213,7 +213,7 @@ impl Map {
                         }
 
                         light -= tile.opaqueness;
-                    }
+                    },
                     RaycastMode::Walkable => {
                         if !tile.walkable() {
                             return match last {

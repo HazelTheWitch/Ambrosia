@@ -196,12 +196,11 @@ impl World {
         let entity = Entity::new(self.entities.len());
         let id = entity.id;
         self.entities.push(Some(entity));
-        match self.entities.get_mut(id) {
-            Some(entity) => match entity {
-                Some(entity) => Ok(entity),
-                None => Err(ECSError::CouldNotSpawn),
-            },
-            None => Err(ECSError::CouldNotSpawn),
+
+        if let Some(Some(entity)) = self.entities.get_mut(id) {
+            Ok(entity)
+        } else {
+            Err(ECSError::CouldNotSpawn)
         }
     }
 
@@ -304,6 +303,7 @@ impl World {
     }
 }
 
+#[derive(Debug)]
 pub enum ECSError {
     DataAlreadyExists,
     CouldNotSpawn,

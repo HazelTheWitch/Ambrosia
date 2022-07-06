@@ -21,3 +21,25 @@ macro_rules! add_system {
         $world.add_system(std::boxed::Box::new($system), $priority)
     };
 }
+
+#[macro_export]
+macro_rules! query {
+    () => {
+        crate::ecs::Query::new()
+    };
+
+    ($t: ty) => {
+        query!().include::<$t>()
+    };
+
+    ($t: ty, $($ts: ty),+) => {
+        query!($($ts),+).include::<$t>()
+    };
+
+    ($world: expr, $($ts: ty),+) => {
+        {
+            let query = query!($($ts),+);
+            
+        }
+    };
+}
