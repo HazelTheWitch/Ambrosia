@@ -72,7 +72,7 @@ pub struct RaycastResult<'t> {
 impl <'t> RaycastResult<'t> {
     fn new(start: Vector, end: Option<Vector>, path: Vec<(Vector, &'t Tile)>) -> Self {
         match end {
-            Some(end) => RaycastResult { hit_position: Some(end), start, distance: Some(start.distance(&end)), path },
+            Some(end) => RaycastResult { hit_position: Some(end), start, distance: Some(Vector::distance(&start, &end)), path },
             None => RaycastResult { hit_position: None, start, distance: None, path }
         }
     }

@@ -156,7 +156,7 @@ impl ReferenceState {
 impl Display for ReferenceState {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            ReferenceState::Immutable(borrow_count) => write!(f, "Immutable State - {}", borrow_count),
+            ReferenceState::Immutable(borrow_count) => write!(f, "Immutable - {}", borrow_count),
             ReferenceState::Mutable => write!(f, "Mutable"),
             ReferenceState::None => write!(f, "Not Borrowed"),
         }
@@ -436,6 +436,3 @@ pub enum ECSError {
     DataAlreadyExists,
     CouldNotSpawn,
 }
-
-// TODO: Query Helper Methods
-// TODO: Query Macro / `for (T1, T2, T3) in query!(world, T1, T2, T3)` syntax

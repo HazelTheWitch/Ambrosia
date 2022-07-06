@@ -6,6 +6,11 @@ use std::{
 pub const ZERO_VECTOR: Vector = Vector { x: 0, y: 0 };
 pub const ONE_VECTOR: Vector = Vector { x: 1, y: 1 };
 
+pub const LEFT_VECTOR: Vector = Vector { x: -1, y: 0 };
+pub const RIGHT_VECTOR: Vector = Vector { x: 1, y: 0 };
+pub const UP_VECTOR: Vector = Vector { x: 0, y: -1 };
+pub const DOWN_VECTOR: Vector = Vector { x: 0, y: 1 };
+
 #[derive(Clone, Copy, PartialEq, Eq, Hash)]
 pub struct Vector {
     pub x: i32,
@@ -21,9 +26,9 @@ impl Vector {
         (self.x, self.y)
     }
 
-    pub fn distance(&self, other: &Vector) -> f32 {
-        let (x0, y0) = self.tuple();
-        let (x1, y1) = other.tuple();
+    pub fn distance(a: &Vector, b: &Vector) -> f32 {
+        let (x0, y0) = a.tuple();
+        let (x1, y1) = b.tuple();
 
         let (dx, dy) = (x0 - x1, y0 - y1);
 
@@ -43,7 +48,7 @@ impl Vector {
     pub fn line_lerp(a: &Vector, b: &Vector) -> Vec<Vector> {
         let mut points = Vec::new();
 
-        let n = a.distance(b).ceil() as i32 * 10;
+        let n = Vector::distance(a, b).ceil() as i32 * 10;
 
         for i in 0..n {
             let t = (i as f32) / ((n - 1) as f32);

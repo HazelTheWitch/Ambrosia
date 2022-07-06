@@ -74,7 +74,6 @@ impl GameState for State {
         let key_entities = self.world.get_resource::<KeyEntities>().unwrap();
 
         let player = key_entities.player(&self.world);
-        // let offset = match self.world.query_one_entity(&query!(components::Position, components::Camera)) {
         let offset = match query_one!(self.world, components::Position, components::Camera) {
             Some(entity) => {
                 match entity.get_component::<components::Position>() {

@@ -201,7 +201,7 @@ impl Viewshed {
             for y in top..=bottom {
                 let pos = Vector::new(x, y);
 
-                let dist = pos.distance(&center);
+                let dist = Vector::distance(&pos, &center);
 
                 if dist <= self.view_distance {
                     // We are in the visiblity circle
