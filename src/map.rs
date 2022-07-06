@@ -72,16 +72,7 @@ pub struct RaycastResult<'t> {
 impl <'t> RaycastResult<'t> {
     fn new(start: Vector, end: Option<Vector>, path: Vec<(Vector, &'t Tile)>) -> Self {
         match end {
-            Some(end) => RaycastResult { hit_position: Some(end), start, distance: Some({
-                let ref this = start;
-                let other = &end;
-                let (x0, y0) = this.tuple();
-                let (x1, y1) = other.tuple();
-
-                let (dx, dy) = (x0 - x1, y0 - y1);
-
-                ((dx * dx + dy * dy) as f32).sqrt()
-            }), path },
+            Some(end) => RaycastResult { hit_position: Some(end), start, distance: Some(start.distance(&end)), path },
             None => RaycastResult { hit_position: None, start, distance: None, path }
         }
     }
