@@ -62,6 +62,42 @@ impl Display for Tile {
     }
 }
 
+pub struct RaycastResult<'t> {
+    hit_position: Option<Vector>,
+    start: Vector,
+    distance: Option<f32>,
+    path: Vec<(Vector, &'t Tile)>
+}
+
+impl <'t> RaycastResult<'t> {
+    fn new(start: Vector, end: Option<Vector>, path: Vec<(Vector, &'t Tile)>) -> Self {
+        match end {
+            Some(end) => RaycastResult { hit_position: Some(end), start, distance: Some(start.distance(&end)), path },
+            None => RaycastResult { hit_position: None, start, distance: None, path }
+        }
+    }
+
+    pub fn hit(&self) -> bool {
+        self.hit_position.is_some()
+    }
+
+    pub fn hit_position(&self) -> Option<Vector> {
+        self.hit_position
+    }
+
+    pub fn start(&self) -> Vector {
+        self.start
+    }
+
+    pub fn distance(&self) -> Option<f32> {
+        self.distance
+    }
+
+    pub fn path(&self) -> &[(Vector, &Tile)] {
+        self.path.as_ref()
+    }
+}
+
 pub struct Map {
     pub width: usize,
     pub height: usize,
@@ -200,16 +236,20 @@ impl Map {
         (0 <= x && x < self.width as i32) && (0 <= y && y < self.height as i32)
     }
 
-    pub fn raycast(&self, start: &Vector, end: &Vector, mode: RaycastMode) -> (bool, f32) {
+    pub fn raycast(&self, start: Vector, end: Vector, mode: RaycastMode) -> RaycastResult {
         let mut light: u8 = 255;
         let mut last: Option<Vector> = None;
 
-        for point in Vector::line(start, end) {
+        let mut path: Vec<(Vector, &Tile)> = Vec::new();
+
+        for point in Vector::line(&start, &end) {
             if let Some(tile) = self.get(&point) {
+                path.push((point, tile));
+
                 match mode {
                     RaycastMode::Visibility => {
                         if tile.opaqueness >= light {
-                            return (true, start.distance(&point));
+                            return RaycastResult::new(start, Some(point), path);
                         }
 
                         light -= tile.opaqueness;
@@ -217,8 +257,8 @@ impl Map {
                     RaycastMode::Walkable => {
                         if !tile.walkable() {
                             return match last {
-                                Some(last) => (true, start.distance(&last)),
-                                None => (true, start.distance(&point))
+                                Some(last) => RaycastResult::new(start, Some(last), path),
+                                None => RaycastResult::new(start, Some(point), path)
                             };
                         }
 
@@ -226,11 +266,11 @@ impl Map {
                     }
                 }
             } else {
-                return (true, start.distance(&point));
+                return RaycastResult::new(start, Some(point), path);
             }
         }
 
-        (false, start.distance(end))
+        RaycastResult::new(start, None, path)
     }
 }
 

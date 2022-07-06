@@ -182,7 +182,7 @@ impl Viewshed {
     }
 
     /// Update the viewshed, returns true iff the view was recalculated
-    pub fn update(&mut self, map: &mut Map, center: &Vector, mark_discovered: bool) -> bool {
+    pub fn update(&mut self, map: &mut Map, center: Vector, mark_discovered: bool) -> bool {
         if !self.dirty {
             return false;
         }
@@ -201,13 +201,23 @@ impl Viewshed {
             for y in top..=bottom {
                 let pos = Vector::new(x, y);
 
-                let dist = pos.distance(center);
+                let dist = pos.distance(&center);
 
                 if dist <= self.view_distance {
                     // We are in the visiblity circle
-                    let (hit, distance) = map.raycast(center, &pos, RaycastMode::Visibility);
+                    let result = map.raycast(center, pos, RaycastMode::Visibility);
 
-                    if !hit || dist == distance {
+                    if let Some(distance) = result.distance() {
+                        if dist == distance {
+                            if let Some(tile) = map.get_mut(&pos) {
+                                self.visible.insert(pos);
+    
+                                if mark_discovered {
+                                    tile.discover();
+                                }
+                            }
+                        }
+                    } else {
                         if let Some(tile) = map.get_mut(&pos) {
                             self.visible.insert(pos);
 

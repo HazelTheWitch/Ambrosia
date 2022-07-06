@@ -55,7 +55,7 @@ impl System for ViewSystem {
                     entity.get_component_mut::<Viewshed>(),
                     entity.get_component::<Position>(),
                 ) {
-                    viewshed.update(map, &position.coords(), entity.has_component::<Player>());
+                    viewshed.update(map, position.coords(), entity.has_component::<Player>());
                 }
             }
         }
