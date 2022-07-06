@@ -37,9 +37,13 @@ macro_rules! query {
     };
 
     ($world: expr, $($ts: ty),+) => {
-        {
-            let query = query!($($ts),+);
-            
-        }
+        $world.query_entities(&query!($($ts),+))
+    };
+}
+
+#[macro_export]
+macro_rules! query_one {
+    ($world: expr, $($ts: ty),+) => {
+        $world.query_one_entity(&query!($($ts),+))
     };
 }

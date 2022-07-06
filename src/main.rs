@@ -74,7 +74,8 @@ impl GameState for State {
         let key_entities = self.world.get_resource::<KeyEntities>().unwrap();
 
         let player = key_entities.player(&self.world);
-        let offset = match self.world.query_one_entity(&ecs::Query::new().include::<components::Position>().include::<components::Camera>()) {
+        // let offset = match self.world.query_one_entity(&query!(components::Position, components::Camera)) {
+        let offset = match query_one!(self.world, components::Position, components::Camera) {
             Some(entity) => {
                 match entity.get_component::<components::Position>() {
                     Some(position) => position.coords() - constants::CORNER_POINT_2,
@@ -206,7 +207,7 @@ fn main() -> rltk::BError {
     add_system!(gs.world, systems::ViewSystem::new(), -900);
     add_system!(gs.world, systems::DebugSystem::new(components::DebugLevel::None), -1000);
 
-    let player = entities::player(gs.world.spawn(), "Hazel".to_string(), (constants::MAP_SIZE.0 / 2) as i32, (constants::MAP_SIZE.1 / 2) as i32).unwrap();
+    let player = entities::player(gs.world.spawn(), "Hazel".into(), (constants::MAP_SIZE.0 / 2) as i32, (constants::MAP_SIZE.1 / 2) as i32).unwrap();
     key_entities.set_player(player);
 
     let _ = gs.world.insert_resource(key_entities).unwrap();
