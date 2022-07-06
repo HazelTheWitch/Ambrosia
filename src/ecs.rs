@@ -1,6 +1,7 @@
 use std::any::{Any, TypeId};
 use std::cell::UnsafeCell;
 use std::collections::HashMap;
+use std::collections::hash_map::Entry;
 use std::ops::Add;
 
 pub trait System {
@@ -21,7 +22,7 @@ impl DynamicStore {
     pub fn insert<T: Any>(&mut self, data: T) -> Result<&mut Self, ECSError> {
         let id = data.type_id();
 
-        if let std::collections::hash_map::Entry::Vacant(e) = self.data.entry(id) {
+        if let Entry::Vacant(e) = self.data.entry(id) {
             e.insert(UnsafeCell::new(Box::new(data)));
 
             Ok(self)
