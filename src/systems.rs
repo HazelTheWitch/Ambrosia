@@ -49,13 +49,13 @@ impl System for ViewSystem {
     fn execute(&self, world: &World) {
         let query = Query::new().include::<Viewshed>().include::<Position>();
 
-        if let Some(map) = world.get_resource_mut::<Map>() {
+        if let Some(mut map) = world.get_resource_mut::<Map>() {
             for entity in world.query_entities(&query) {
-                if let (Some(viewshed), Some(position)) = (
+                if let (Some(mut viewshed), Some(position)) = (
                     entity.get_component_mut::<Viewshed>(),
                     entity.get_component::<Position>(),
                 ) {
-                    viewshed.update(map, position.coords(), entity.has_component::<Player>());
+                    (*viewshed).update(&mut *map, position.coords(), entity.has_component::<Player>());
                 }
             }
         }

@@ -91,21 +91,21 @@ impl GameState for State {
 
         // Before ticking systems, move player
         if let Some(map) = self.world.get_resource::<map::Map>() {
-            if let Some(position) = player.get_component_mut::<components::Position>() {
+            if let Some(mut position) = player.get_component_mut::<components::Position>() {
                 let moved = match ctx.key {
                     None => false,
                     Some(key) => match key {
-                        rltk::VirtualKeyCode::W | rltk::VirtualKeyCode::Up => position.try_move(map, Vector::new(0, -1)),
-                        rltk::VirtualKeyCode::A | rltk::VirtualKeyCode::Left => position.try_move(map, Vector::new(-1, 0)),
-                        rltk::VirtualKeyCode::S | rltk::VirtualKeyCode::Down => position.try_move(map, Vector::new(0, 1)),
-                        rltk::VirtualKeyCode::D | rltk::VirtualKeyCode::Right => position.try_move(map, Vector::new(1, 0)),
+                        rltk::VirtualKeyCode::W | rltk::VirtualKeyCode::Up => (*position).try_move(&*map, Vector::new(0, -1)),
+                        rltk::VirtualKeyCode::A | rltk::VirtualKeyCode::Left => (*position).try_move(&*map, Vector::new(-1, 0)),
+                        rltk::VirtualKeyCode::S | rltk::VirtualKeyCode::Down => (*position).try_move(&*map, Vector::new(0, 1)),
+                        rltk::VirtualKeyCode::D | rltk::VirtualKeyCode::Right => (*position).try_move(&*map, Vector::new(1, 0)),
                         _ => false
                     }
                 };
 
-                if let Some(viewshed) = player.get_component_mut::<components::Viewshed>() {
+                if let Some(mut viewshed) = player.get_component_mut::<components::Viewshed>() {
                     if moved {
-                        viewshed.mark_dirty();
+                        (*viewshed).mark_dirty();
                     }
                 }
             }
@@ -158,7 +158,7 @@ impl GameState for State {
 
         // Entity Rendering
         // First initialize all entity lists to empty vecs
-        let mut entity_map: HashMap<vectors::Vector, (&Position, &ecs::Entity)> = HashMap::new();
+        let mut entity_map: HashMap<vectors::Vector, (Position, &ecs::Entity)> = HashMap::new();
 
         let query = query!(components::Position, components::SingleGlyphRenderer);
 
@@ -168,10 +168,10 @@ impl GameState for State {
                 let pos = position.coords();
                 if let Some((other_position, _)) = entity_map.get(&pos) {
                     if position.priority() > other_position.priority() {
-                        entity_map.insert(pos, (position, entity));
+                        entity_map.insert(pos, (*position, entity));
                     }
                 } else {
-                    entity_map.insert(pos, (position, entity));
+                    entity_map.insert(pos, (*position, entity));
                 }
             }
         }
