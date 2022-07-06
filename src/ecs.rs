@@ -1,11 +1,122 @@
 use std::any::{Any, TypeId};
-use std::cell::UnsafeCell;
+use std::cell::{UnsafeCell, Cell, Ref};
 use std::collections::HashMap;
 use std::collections::hash_map::Entry;
-use std::ops::Add;
+use std::fmt::Display;
+use std::ops::{Add, Deref, DerefMut};
 
 pub trait System {
     fn execute(&self, world: &World);
+}
+
+struct DynamicRef<'b, T> {
+    value: &'b T,
+    reference_state_cell: &'b Cell<ReferenceState>
+}
+
+impl <'b, T> DynamicRef<'b, T> {
+    fn new(value: &'b T, reference_state_cell: &'b Cell<ReferenceState>) -> Option<Self> {
+        match reference_state_cell.get() {
+            ReferenceState::Immutable(b) => {
+                let b = b.wrapping_add(1);
+                if b > 0 {
+                    reference_state_cell.set(ReferenceState::Immutable(b));
+                    Some(DynamicRef { value, reference_state_cell })
+                } else {
+                    None
+                }
+            },
+            ReferenceState::Mutable => panic!("attempted to immutably borrow while mutably borrowing"),
+            ReferenceState::None => {
+                reference_state_cell.set(ReferenceState::Immutable(1));
+                Some(DynamicRef { value, reference_state_cell })
+            },
+        }
+    }
+}
+
+impl <'b, T> Deref for DynamicRef<'b, T> {
+    type Target = T;
+
+    fn deref(&self) -> &Self::Target {
+        self.value
+    }
+}
+
+struct DynamicRefMut<'b, T> {
+    value: &'b mut T,
+    reference_state_cell: &'b Cell<ReferenceState>
+}
+
+impl <'b, T> DynamicRefMut<'b, T> {
+    fn new(value: &'b mut T, reference_state_cell: &'b Cell<ReferenceState>) -> Option<Self> {
+        match reference_state_cell.get() {
+            ReferenceState::Immutable(b) => panic!("attempted to mutably borrow while immutably borrowing {} times", b),
+            ReferenceState::Mutable => panic!("attempted to mutably borrow while already mutably borrowing"),
+            ReferenceState::None => {
+                reference_state_cell.set(ReferenceState::Mutable);
+                Some(DynamicRefMut { value, reference_state_cell })
+            },
+        }
+    }
+}
+
+impl <'b, T> Deref for DynamicRefMut<'b, T> {
+    type Target = T;
+
+    #[inline]
+    fn deref(&self) -> &Self::Target {
+        self.value
+    }
+}
+
+impl <'b, T> DerefMut for DynamicRefMut<'b, T> {
+    #[inline]
+    fn deref_mut(&mut self) -> &mut Self::Target {
+        self.value
+    }
+}
+
+struct DynamicCell {
+    data: UnsafeCell<Box<dyn Any>>,
+    reference_state_cell: Cell<ReferenceState>
+}
+
+impl DynamicCell {
+    pub fn get<T: Any>(&self) -> Option<DynamicRef<'_, T>> {
+        let value = unsafe {
+            (**self.data.get()) // Convert data in UnsafeCell to `dyn Any`
+                .downcast_ref::<T>()? // Downcast to a reference of type &T
+        };
+
+        DynamicRef::new(value, &self.reference_state_cell)
+    }
+
+    pub fn get_mut<T: Any>(&self) -> Option<DynamicRefMut<'_, T>> {
+        let value = unsafe {
+            (**self.data.get()) // Convert data in UnsafeCell to `dyn Any`
+                .downcast_mut::<T>()? // Downcast to a reference of type &mut T
+        };
+
+        DynamicRefMut::new(value, &self.reference_state_cell)
+    }
+}
+
+#[derive(Clone, Copy)]
+enum ReferenceState {
+    Immutable(usize),
+    Mutable,
+    None
+}
+
+impl Display for ReferenceState {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            ReferenceState::Immutable(borrow_count) => write!(f, "Immutable State - {}", borrow_count),
+            ReferenceState::Mutable => write!(f, "Mutable"),
+            ReferenceState::None => write!(f, "Not Borrowed"),
+        }
+    }
 }
 
 struct DynamicStore {
