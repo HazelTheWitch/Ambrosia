@@ -440,6 +440,12 @@ impl World {
     }
 }
 
+impl Default for World {
+    fn default() -> Self {
+        World::new()
+    }
+}
+
 #[derive(Debug)]
 pub enum ECSError {
     DataAlreadyExists,
