@@ -56,14 +56,12 @@ impl <'b, T> Drop for DynamicRefMut<'b, T> {
 impl <'b, T> Deref for DynamicRefMut<'b, T> {
     type Target = T;
 
-    #[inline]
     fn deref(&self) -> &Self::Target {
         self.value
     }
 }
 
 impl <'b, T> DerefMut for DynamicRefMut<'b, T> {
-    #[inline]
     fn deref_mut(&mut self) -> &mut Self::Target {
         self.value
     }
@@ -95,6 +93,14 @@ impl DynamicCell {
         };
 
         DynamicRefMut::new(value, &self.reference_state_cell)
+    }
+
+    pub unsafe fn get_unchecked<T: Any>(&self) -> &T {
+        (**self.data.get()).downcast_ref_unchecked::<T>()
+    }
+
+    pub unsafe fn get_mut_unchecked<T: Any>(&self) -> &mut T {
+        (**self.data.get()).downcast_mut_unchecked::<T>()
     }
 }
 
@@ -194,20 +200,23 @@ impl DynamicStore {
         self.data.contains_key(&TypeId::of::<T>())
     }
 
+    #[inline]
     fn get_cell<T: Any>(&self) -> Option<&DynamicCell> {
         self.data.get(&TypeId::of::<T>())
     }
 
     pub fn get<T: Any>(&self) -> Option<DynamicRef<'_, T>> {
-        let cell = self.get_cell::<T>()?;
-
-        cell.get::<T>()
+        self.get_cell::<T>()?.get::<T>()
     }
 
     pub fn get_mut<T: Any>(&self) -> Option<DynamicRefMut<'_, T>> {
-        let cell = self.get_cell::<T>()?;
+        self.get_cell::<T>()?.get_mut::<T>()
+    }
+}
 
-        cell.get_mut::<T>()
+impl Default for DynamicStore {
+    fn default() -> Self {
+        DynamicStore::new()
     }
 }
 
@@ -220,7 +229,7 @@ impl Entity {
     pub fn new(id: usize) -> Self {
         Entity {
             id,
-            components: DynamicStore::new(),
+            components: Default::default(),
         }
     }
 
@@ -322,9 +331,9 @@ pub struct World {
 impl World {
     pub fn new() -> Self {
         World {
-            entities: Vec::new(),
-            systems: Vec::new(),
-            resources: DynamicStore::new(),
+            entities: Default::default(),
+            systems: Default::default(),
+            resources: Default::default(),
         }
     }
 
