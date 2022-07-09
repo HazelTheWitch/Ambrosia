@@ -95,7 +95,7 @@ impl Debug {
 
     pub fn clear(&mut self) {
         self.max_level = DebugLevel::None;
-        self.messages = HashMap::new();
+        self.messages.clear();
     }
 
     pub fn add_message(&mut self, level: DebugLevel, reason: String, message: String) {

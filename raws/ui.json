@@ -1,0 +1,48 @@
+{
+    "open": [
+        "root"
+    ],
+    "panels" : {
+        "root": {
+            "name": "Ambrosia",
+            "results": {
+                "quit": "Exit",
+                "play": {
+                    "Open": {
+                        "ids": [
+                            "root"
+                        ]
+                    }
+                }
+            },
+            "components": [
+                {
+                    "position": {"x": 0, "y": 0},
+                    "size": {"x": 119, "y": 79},
+                    "focusable": false,
+                    "atomics": [
+                        "Box"
+                    ]
+                },
+                {
+                    "position": {"x": 0, "y": 0},
+                    "size": {"x": 119, "y":79},
+                    "focusable": true,
+                    "atomics": [
+                        {
+                            "FullscreenOptions": {
+                                "options": [
+                                    { "id": "play", "display": "Play" },
+                                    { "id": "quit", "display": "Quit" }
+                                ],
+                                "selected": 0
+                            }
+                        }
+                    ]
+                }
+            ],
+            "clears": true,
+            "focused": 0
+        }
+    }
+}

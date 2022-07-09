@@ -3,6 +3,8 @@ use std::{
     ops::{Add, Sub},
 };
 
+use serde::Deserialize;
+
 pub const ZERO_VECTOR: Vector = Vector { x: 0, y: 0 };
 pub const ONE_VECTOR: Vector = Vector { x: 1, y: 1 };
 
@@ -11,7 +13,7 @@ pub const RIGHT_VECTOR: Vector = Vector { x: 1, y: 0 };
 pub const UP_VECTOR: Vector = Vector { x: 0, y: -1 };
 pub const DOWN_VECTOR: Vector = Vector { x: 0, y: 1 };
 
-#[derive(Clone, Copy, PartialEq, Eq, Hash)]
+#[derive(Clone, Copy, PartialEq, Eq, Hash, Deserialize, Debug)]
 pub struct Vector {
     pub x: i32,
     pub y: i32,
@@ -99,6 +101,10 @@ impl Vector {
         }
 
         points
+    }
+
+    pub fn center(a: Vector, b: Vector) -> Vector {
+        Vector { x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 }
     }
 }
 

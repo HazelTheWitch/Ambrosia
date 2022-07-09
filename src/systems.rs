@@ -19,7 +19,7 @@ impl DebugSystem {
 impl System for DebugSystem {
     fn execute(&self, world: &World) {
         for e in world.query_entities(&Query::new().include::<Debug>()) {
-            if let Some(debug) = e.get_component::<Debug>() {
+            if let Some(mut debug) = e.get_component_mut::<Debug>() {
                 let name: String = match e.get_component::<Named>() {
                     Some(named) => named.name.to_string(),
                     None => format!("Entity({})", e.id()),
@@ -32,6 +32,8 @@ impl System for DebugSystem {
                         println!("    {}", message);
                     }
                 }
+
+                debug.clear();
             }
         }
     }
