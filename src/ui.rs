@@ -3,7 +3,7 @@ use std::collections::HashMap;
 use rltk::Rltk;
 use serde::Deserialize;
 
-use crate::{vectors::Vector, theme::Theme, ecs::World};
+use crate::{vectors::{Vector, ZERO_VECTOR}, theme::Theme, ecs::{World, Entity}, map::Map, query_one, components::{Position, Camera, SingleGlyphRenderer, Player, Viewshed}, transform::Transform, query};
 
 #[derive(Deserialize, Clone, PartialEq, Eq, Debug)]
 pub enum UiAction {
@@ -16,7 +16,6 @@ pub enum UiAction {
 pub struct UiComponent {
     position: Vector, 
     size: Vector,
-    focusable: bool,
     atomics: Vec<UiAtomic>
 }
 
@@ -51,7 +50,8 @@ pub struct UiOption {
 pub enum UiAtomic {
     Box,
     FullscreenOptions { options: Vec<UiOption>, selected: usize },
-    Text { text: String }
+    Text { text: String },
+    WorldView,
 }
 
 impl UiAtomic {
@@ -70,6 +70,53 @@ impl UiAtomic {
             },
             UiAtomic::Text { text } => {
                 ctx.print_centered_at(position.x, position.y, text);
+            },
+            UiAtomic::WorldView => {
+                // let key_entities = world.get_resource::<KeyEntities>().unwrap();
+
+                let offset = match query_one!(world, Position, Camera) {
+                    Some(entity) => match entity.get_component::<Position>() {
+                        Some(component) => component.coords() - Vector::center(position, position + size),
+                        None => ZERO_VECTOR
+                    },
+                    None => ZERO_VECTOR
+                };
+ 
+                let camera_transform = Transform::new(offset);
+
+                if let Some(map) = world.get_resource_mut::<Map>() {
+                    map.render(world, ctx, theme, camera_transform, position, size);
+                }
+
+                // Entity Rendering
+                // First initialize all entity lists to empty vecs
+                let mut entity_map: HashMap<Vector, (Position, &Entity)> = HashMap::new();
+
+                let query = query!(Position, SingleGlyphRenderer);
+
+                // Fill the lists according to priotity
+                for entity in world.query_entities(&query) {
+                    if let Some(position) = entity.get_component::<Position>() {
+                        let pos = position.coords();
+                        if let Some((other_position, _)) = entity_map.get(&pos) {
+                            if position.priority() > other_position.priority() {
+                                entity_map.insert(pos, (*position, entity));
+                            }
+                        } else {
+                            entity_map.insert(pos, (*position, entity));
+                        }
+                    }
+                }
+
+                // Render all top prioritized entities
+                for (position, entity) in entity_map.values() {
+                    if let Some(renderer) = entity.get_component::<SingleGlyphRenderer>() {
+                        let screen_pos = camera_transform.inverse_apply(position.coords());
+
+                        // TODO: Fix bounds problem, thats a later hazel problem
+                        ctx.set(screen_pos.x, screen_pos.y, renderer.fg(), renderer.bg(), renderer.glyph());
+                    }
+                }
             }
         }
     }
@@ -96,6 +143,37 @@ impl UiAtomic {
                 }
             },
             UiAtomic::Text { text: _text } => (self.clone(), None),
+            UiAtomic::WorldView => {
+                if let (Some(map), Some(player)) = (world.get_resource::<Map>(), query_one!(world, Player)) {
+                    if let Some(mut position) = player.get_component_mut::<Position>() {
+                        let moved = match ctx.key {
+                            None => false,
+                            Some(key) => match key {
+                                rltk::VirtualKeyCode::W | rltk::VirtualKeyCode::Up => (*position).try_move(&*map, Vector::new(0, -1)),
+                                rltk::VirtualKeyCode::A | rltk::VirtualKeyCode::Left => (*position).try_move(&*map, Vector::new(-1, 0)),
+                                rltk::VirtualKeyCode::S | rltk::VirtualKeyCode::Down => (*position).try_move(&*map, Vector::new(0, 1)),
+                                rltk::VirtualKeyCode::D | rltk::VirtualKeyCode::Right => (*position).try_move(&*map, Vector::new(1, 0)),
+                                _ => false
+                            }
+                        };
+        
+                        if let Some(mut viewshed) = player.get_component_mut::<Viewshed>() {
+                            if moved {
+                                (*viewshed).mark_dirty();
+                            }
+                        }
+                    }
+                }
+
+                world.tick();
+                (self.clone(), match ctx.key {
+                    Some(key) => match key {
+                        rltk::VirtualKeyCode::Escape => Some("main_menu".to_owned()),
+                        _ => None
+                    },
+                    None => None
+                })
+            }
         }
     }
 }
@@ -134,11 +212,9 @@ impl UiMaster {
 
 #[derive(Deserialize, Clone, Debug)]
 pub struct UiPanel {
-    name: String,
     results: HashMap<String, UiAction>,
     components: Vec<UiComponent>,
     clears: bool,
-    focused: i32
 }
 
 impl UiPanel {

@@ -1,6 +1,8 @@
 use std::fmt::Display;
 
-use crate::{clamp, constants::MAP_SIZE, vectors::Vector};
+use rltk::Rltk;
+
+use crate::{clamp, constants::MAP_SIZE, vectors::Vector, ecs::World, theme::Theme, transform::Transform, systems::TickInfo};
 
 /// Represents a tile
 /// Strength:
@@ -15,6 +17,7 @@ pub struct Tile {
     strength: u8,
     opaqueness: u8,
     discovered: bool,
+    last_seen: Option<usize>,
 }
 
 impl Tile {
@@ -23,6 +26,7 @@ impl Tile {
             strength,
             opaqueness,
             discovered: false,
+            last_seen: None,
         }
     }
 
@@ -53,6 +57,20 @@ impl Tile {
 
     pub fn discovered(&self) -> bool {
         self.discovered
+    }
+
+    pub fn visible(&self, current_tick: Option<usize>) -> bool {
+        match self.last_seen {
+            Some(tick) => match current_tick {
+                Some(current) => tick == current,
+                None => false
+            },
+            None => false
+        }
+    }
+
+    pub fn see(&mut self, tick: usize) {
+        self.last_seen = Some(tick);
     }
 }
 
@@ -146,6 +164,36 @@ impl Map {
         }
 
         map
+    }
+
+    pub fn render(&self, world: &World, ctx: &mut Rltk, theme: &Theme, transform: Transform, position: Vector, size: Vector) {
+        let tick = world.get_resource::<TickInfo>().expect("a TickInfo object in world").last_view_update_tick();
+
+        for x in position.x..(position.x + size.x) {
+            for y in position.y..(position.y + size.y) {
+                let final_position = transform.apply(Vector::new(x, y));
+
+                if let Some(tile) = self.get(&final_position) {
+                    if tile.discovered() {
+                        let glyph: rltk::FontCharType = {
+                            if tile.walkable() {
+                                rltk::to_cp437('.')
+                            } else {
+                                rltk::to_cp437('#')
+                            }
+                        };
+
+                        let terrain_color = if tile.visible(tick) {
+                            theme.terrain_color_visible
+                        } else {
+                            theme.terrain_color_discovered
+                        };
+
+                        ctx.set(x, y, terrain_color, theme.background_color, glyph);
+                    }
+                }
+            }
+        }
     }
 
     pub fn empty(width: usize, height: usize) -> Self {

@@ -6,6 +6,10 @@ use std::fmt::Display;
 use std::ops::{Add, Deref, DerefMut};
 
 pub trait System {
+    fn initialize(&self, _world: &World) {
+        
+    }
+    
     fn execute(&self, world: &World);
 }
 
@@ -394,6 +398,8 @@ impl World {
     }
 
     pub fn add_system(&mut self, system: Box<dyn System>, priority: i32) -> &mut Self {
+        system.initialize(&self);
+        
         let mut index = 0;
 
         while let Some((_, other_priority)) = self.systems.get(index) {
@@ -405,6 +411,7 @@ impl World {
         }
 
         self.systems.insert(index, (system, priority));
+
         self
     }
 

@@ -181,8 +181,12 @@ impl Viewshed {
         self.dirty = true;
     }
 
+    pub fn dirty(&self) -> bool {
+        self.dirty
+    }
+
     /// Update the viewshed, returns true iff the view was recalculated
-    pub fn update(&mut self, map: &mut Map, center: Vector, mark_discovered: bool) -> bool {
+    pub fn update(&mut self, map: &mut Map, center: Vector, mark_discovered: bool, tick: Option<usize>) -> bool {
         if !self.dirty {
             return false;
         }
@@ -214,6 +218,7 @@ impl Viewshed {
     
                                 if mark_discovered {
                                     tile.discover();
+                                    tile.see(tick.expect("a valid tick to set visible"));
                                 }
                             }
                         }
@@ -223,6 +228,7 @@ impl Viewshed {
 
                             if mark_discovered {
                                 tile.discover();
+                                tile.see(tick.expect("a valid tick to set visible"));
                             }
                         }
                     }

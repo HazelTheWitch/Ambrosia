@@ -29,21 +29,21 @@ macro_rules! query {
     };
 
     ($t: ty) => {
-        query!().include::<$t>()
+        crate::query!().include::<$t>()
     };
 
     ($t: ty, $($ts: ty),+) => {
-        query!($($ts),+).include::<$t>()
+        crate::query!($($ts),+).include::<$t>()
     };
 
     ($world: expr, $($ts: ty),+) => {
-        $world.query_entities(&query!($($ts),+))
+        $world.query_entities(&crate::query!($($ts),+))
     };
 }
 
 #[macro_export]
 macro_rules! query_one {
     ($world: expr, $($ts: ty),+) => {
-        $world.query_one_entity(&query!($($ts),+))
+        $world.query_one_entity(&crate::query!($($ts),+))
     };
 }

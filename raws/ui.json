@@ -4,13 +4,12 @@
     ],
     "panels" : {
         "root": {
-            "name": "Ambrosia",
             "results": {
                 "quit": "Exit",
                 "play": {
-                    "Open": {
+                    "Set": {
                         "ids": [
-                            "root"
+                            "game"
                         ]
                     }
                 }
@@ -19,7 +18,6 @@
                 {
                     "position": {"x": 0, "y": 0},
                     "size": {"x": 119, "y": 79},
-                    "focusable": false,
                     "atomics": [
                         "Box"
                     ]
@@ -27,7 +25,6 @@
                 {
                     "position": {"x": 0, "y": 0},
                     "size": {"x": 119, "y":79},
-                    "focusable": true,
                     "atomics": [
                         {
                             "FullscreenOptions": {
@@ -38,6 +35,35 @@
                                 "selected": 0
                             }
                         }
+                    ]
+                }
+            ],
+            "clears": true,
+            "focused": 0
+        },
+        "game": {
+            "results": {
+                "main_menu": {
+                    "Set": {
+                        "ids": [
+                            "root"
+                        ]
+                    }
+                }
+            },
+            "components": [
+                {
+                    "position": {"x": 0, "y": 0},
+                    "size": { "x": 80, "y": 60 },
+                    "atomics": [
+                        "Box"
+                    ]
+                },
+                {
+                    "position": {"x": 1, "y": 1},
+                    "size": { "x": 79, "y": 59 },
+                    "atomics": [
+                        "WorldView"
                     ]
                 }
             ],
