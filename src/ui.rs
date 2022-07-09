@@ -136,7 +136,7 @@ impl UiAtomic {
                             selected = (selected + 1) % options.len(); 
                             (UiAtomic::FullscreenOptions { options: options.clone(), selected }, None)
                         },
-                        rltk::VirtualKeyCode::Return => (self.clone(), Some(options.get(selected).expect(&format!("a value in index {}", selected)).id.to_owned())),
+                        rltk::VirtualKeyCode::Return => (self.clone(), Some(options.get(selected).unwrap().id.to_owned())),
                         _ => (self.clone(), None)
                     }
                 } else {
@@ -193,7 +193,7 @@ impl UiMaster {
             }
         }
 
-        for panel in self.panels.values().into_iter() {
+        for panel in self.panels.values() {
             for id in panel.referenced_panels() {
                 if !self.panels.contains_key(id) {
                     panic!("panels did not contain id: {}", id);
@@ -203,7 +203,7 @@ impl UiMaster {
     }
 
     pub fn get_panel(&self, id: String) -> Option<&UiPanel> {
-        Some(self.panels.get(&id)?)
+        self.panels.get(&id)
     }
 
     pub fn open_panels(&self) -> Vec<&UiPanel> {
@@ -222,7 +222,7 @@ impl UiPanel {
     pub fn referenced_panels(&self) -> Vec<&String> {
         let mut references = Vec::new();
 
-        for component in self.results.values().into_iter() {
+        for component in self.results.values() {
             match component {
                 UiAction::Open { ids } => {
                     for id in ids {

@@ -222,14 +222,12 @@ impl Viewshed {
                                 }
                             }
                         }
-                    } else {
-                        if let Some(tile) = map.get_mut(&pos) {
-                            self.visible.insert(pos);
+                    } else if let Some(tile) = map.get_mut(&pos) {
+                        self.visible.insert(pos);
 
-                            if mark_discovered {
-                                tile.discover();
-                                tile.see(tick.expect("a valid tick to set visible"));
-                            }
+                        if mark_discovered {
+                            tile.discover();
+                            tile.see(tick.expect("a valid tick to set visible"));
                         }
                     }
                 }

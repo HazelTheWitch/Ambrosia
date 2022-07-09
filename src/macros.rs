@@ -25,25 +25,25 @@ macro_rules! add_system {
 #[macro_export]
 macro_rules! query {
     () => {
-        crate::ecs::Query::new()
+        $crate::ecs::Query::new()
     };
 
     ($t: ty) => {
-        crate::query!().include::<$t>()
+        $crate::query!().include::<$t>()
     };
 
     ($t: ty, $($ts: ty),+) => {
-        crate::query!($($ts),+).include::<$t>()
+        $crate::query!($($ts),+).include::<$t>()
     };
 
     ($world: expr, $($ts: ty),+) => {
-        $world.query_entities(&crate::query!($($ts),+))
+        $world.query_entities(&$crate::query!($($ts),+))
     };
 }
 
 #[macro_export]
 macro_rules! query_one {
     ($world: expr, $($ts: ty),+) => {
-        $world.query_one_entity(&crate::query!($($ts),+))
+        $world.query_one_entity(&$crate::query!($($ts),+))
     };
 }

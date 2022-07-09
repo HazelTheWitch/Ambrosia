@@ -316,6 +316,12 @@ impl Query {
     }
 }
 
+impl Default for Query {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl Add for Query {
     type Output = Query;
 
@@ -398,7 +404,7 @@ impl World {
     }
 
     pub fn add_system(&mut self, system: Box<dyn System>, priority: i32) -> &mut Self {
-        system.initialize(&self);
+        system.initialize(self);
         
         let mut index = 0;
 

@@ -48,6 +48,12 @@ impl KeyEntities {
     }
 }
 
+impl Default for KeyEntities {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 pub struct State {
     world: ecs::World,
     ui_panels: Vec<UiPanel>,
@@ -74,8 +80,8 @@ impl State {
         self.open(&panel);
     }
 
-    pub fn open_by_ids(&mut self, ids: &Vec<String>) {
-        for i in ids.to_owned().into_iter() {
+    pub fn open_by_ids(&mut self, ids: &[String]) {
+        for i in ids.iter() {
             let id = i.to_owned();
             self.open_by_id(id);
         }
@@ -122,7 +128,7 @@ impl State {
 
 impl GameState for State {
     fn tick(&mut self, ctx: &mut Rltk) {
-        let action = self.tick_ui(ctx).clone();
+        let action = self.tick_ui(ctx);
 
         match action {
             Some(action) => match action {
@@ -142,7 +148,7 @@ impl GameState for State {
             None => ()
         }
 
-        if self.ui_panels.len() == 0 {
+        if self.ui_panels.is_empty() {
             exit(0); 
         }
     }

@@ -101,7 +101,7 @@ impl TickInfo {
             if -offset as usize > self.current_tick? {
                 None
             } else {
-                Some(self.current_tick? - offset as usize)
+                Some(self.current_tick? + offset as usize)
             }
         }
     }
