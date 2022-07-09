@@ -49,15 +49,17 @@ pub struct UiOption {
 #[derive(Deserialize, Clone, Debug)]
 pub enum UiAtomic {
     Box,
+    BoxHollow,
     FullscreenOptions { options: Vec<UiOption>, selected: usize },
     Text { text: String },
-    WorldView,
+    WorldView { escape: String },
 }
 
 impl UiAtomic {
     pub fn render(&self, world: &World, ctx: &mut Rltk, theme: &Theme, position: Vector, size: Vector) {
         match self {
             UiAtomic::Box => { ctx.draw_box(position.x, position.y, size.x, size.y, theme.ui_color, theme.background_color); },
+            UiAtomic::BoxHollow => { ctx.draw_hollow_box(position.x, position.y, size.x, size.y, theme.ui_color, theme.background_color); },
             UiAtomic::FullscreenOptions { options, selected } => {
                 let center = Vector::center(position, position + size);
                 for (i, option) in options.iter().enumerate() {
@@ -71,9 +73,7 @@ impl UiAtomic {
             UiAtomic::Text { text } => {
                 ctx.print_centered_at(position.x, position.y, text);
             },
-            UiAtomic::WorldView => {
-                // let key_entities = world.get_resource::<KeyEntities>().unwrap();
-
+            UiAtomic::WorldView { escape: _ } => {
                 let offset = match query_one!(world, Position, Camera) {
                     Some(entity) => match entity.get_component::<Position>() {
                         Some(component) => component.coords() - Vector::center(position, position + size),
@@ -124,6 +124,7 @@ impl UiAtomic {
     pub fn tick(&self, world: &World, ctx: &mut Rltk) -> (UiAtomic, Option<String>) {
         match self {
             UiAtomic::Box => (self.clone(), None),
+            UiAtomic::BoxHollow => (self.clone(), None),
             UiAtomic::FullscreenOptions { options, mut selected } => {
                 if let Some(key) = ctx.key {
                     match key {
@@ -143,7 +144,7 @@ impl UiAtomic {
                 }
             },
             UiAtomic::Text { text: _text } => (self.clone(), None),
-            UiAtomic::WorldView => {
+            UiAtomic::WorldView { escape } => {
                 if let (Some(map), Some(player)) = (world.get_resource::<Map>(), query_one!(world, Player)) {
                     if let Some(mut position) = player.get_component_mut::<Position>() {
                         let moved = match ctx.key {
@@ -168,7 +169,7 @@ impl UiAtomic {
                 world.tick();
                 (self.clone(), match ctx.key {
                     Some(key) => match key {
-                        rltk::VirtualKeyCode::Escape => Some("main_menu".to_owned()),
+                        rltk::VirtualKeyCode::Escape => Some(escape.to_owned()),
                         _ => None
                     },
                     None => None
