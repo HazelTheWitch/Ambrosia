@@ -33,13 +33,23 @@ pub fn renderable(
     y: i32,
     priority: u8,
     character: char,
-    fg: (u8, u8, u8),
-    bg: (u8, u8, u8),
+    fg: Option<(u8, u8, u8)>,
+    bg: Option<(u8, u8, u8)>,
 ) -> Result<&mut Entity, ECSError> {
-    positioned(entity, x, y, priority)?.insert_component(SingleGlyphRenderer::new(
+    let fg = match fg {
+        Some(color) => Some(RGB::named(color)),
+        None => None
+    };
+
+    let bg = match bg {
+        Some(color) => Some(RGB::named(color)),
+        None => None
+    };
+
+    positioned(entity, x, y, priority)?.insert_component(Renderer::new(
         rltk::to_cp437(character),
-        RGB::named(fg),
-        RGB::named(bg),
+        fg,
+        bg,
     ))
 }
 
@@ -55,8 +65,8 @@ pub fn player(
         y,
         255,
         PLAYER_GLYPH,
-        PLAYER_COLOR,
-        BACKGROUND_COLOR,
+        Some(PLAYER_COLOR),
+        Some(BACKGROUND_COLOR),
     )?
     .insert_component(Camera::new())?
     .insert_component(Player::new())?

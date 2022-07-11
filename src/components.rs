@@ -85,6 +85,7 @@ pub struct Debug {
     pub messages: HashMap<String, DebugMessage>,
 }
 
+
 impl Debug {
     pub fn new() -> Self {
         Debug {
@@ -122,26 +123,26 @@ impl Named {
     }
 }
 
-pub struct SingleGlyphRenderer {
+pub struct Renderer {
     glyph: rltk::FontCharType,
-    fg: RGB,
-    bg: RGB,
+    fg: Option<RGB>,
+    bg: Option<RGB>,
 }
 
-impl SingleGlyphRenderer {
-    pub fn new(glyph: rltk::FontCharType, fg: RGB, bg: RGB) -> Self {
-        SingleGlyphRenderer { glyph, fg, bg }
+impl Renderer {
+    pub fn new(glyph: rltk::FontCharType, fg: Option<RGB>, bg: Option<RGB>) -> Self {
+        Renderer { glyph, fg, bg }
     }
 
     pub fn glyph(&self) -> rltk::FontCharType {
         self.glyph
     }
 
-    pub fn fg(&self) -> RGB {
+    pub fn fg(&self) -> Option<RGB> {
         self.fg
     }
 
-    pub fn bg(&self) -> RGB {
+    pub fn bg(&self) -> Option<RGB> {
         self.bg
     }
 }
@@ -205,14 +206,14 @@ impl Viewshed {
             for y in top..=bottom {
                 let pos = Vector::new(x, y);
 
-                let dist = Vector::distance(&pos, &center);
+                let dist = Vector::distance(&center, &pos);
 
                 if dist <= self.view_distance {
                     // We are in the visiblity circle
                     let result = map.raycast(center, pos, RaycastMode::Visibility);
 
-                    if let Some(distance) = result.distance() {
-                        if dist == distance {
+                    if let Some(hit_pos) = result.hit_position() {
+                        if pos == hit_pos {
                             if let Some(tile) = map.get_mut(&pos) {
                                 self.visible.insert(pos);
     

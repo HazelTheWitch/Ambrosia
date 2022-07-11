@@ -34,6 +34,7 @@ name = "ambrosia"
 version = "0.1.0"
 dependencies = [
  "include_dir",
+ "rand",
  "rltk",
  "serde",
  "serde_json",

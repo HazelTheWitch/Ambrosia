@@ -3,7 +3,7 @@ use std::collections::HashMap;
 use rltk::Rltk;
 use serde::Deserialize;
 
-use crate::{vectors::{Vector, ZERO_VECTOR}, theme::Theme, ecs::{World, Entity}, map::Map, query_one, components::{Position, Camera, SingleGlyphRenderer, Player, Viewshed}, transform::Transform, query};
+use crate::{vectors::{Vector, ZERO_VECTOR}, theme::Theme, ecs::{World, Entity}, map::Map, query_one, components::{Position, Camera, Renderer, Player, Viewshed}, transform::Transform, query, kdtree::kdtree};
 
 #[derive(Deserialize, Clone, PartialEq, Eq, Debug)]
 pub enum UiAction {
@@ -48,8 +48,7 @@ pub struct UiOption {
 
 #[derive(Deserialize, Clone, Debug)]
 pub enum UiAtomic {
-    Box,
-    BoxHollow,
+    Box { hollow: bool, double: bool },
     FullscreenOptions { options: Vec<UiOption>, selected: usize },
     Text { text: String },
     WorldView { escape: String },
@@ -58,8 +57,21 @@ pub enum UiAtomic {
 impl UiAtomic {
     pub fn render(&self, world: &World, ctx: &mut Rltk, theme: &Theme, position: Vector, size: Vector) {
         match self {
-            UiAtomic::Box => { ctx.draw_box(position.x, position.y, size.x, size.y, theme.ui_color, theme.background_color); },
-            UiAtomic::BoxHollow => { ctx.draw_hollow_box(position.x, position.y, size.x, size.y, theme.ui_color, theme.background_color); },
+            UiAtomic::Box { hollow, double } => {
+                if *hollow {
+                    if *double {
+                        ctx.draw_hollow_box_double(position.x, position.y, size.x, size.y, theme.ui_color, theme.background_color);
+                    } else {
+                        ctx.draw_hollow_box(position.x, position.y, size.x, size.y, theme.ui_color, theme.background_color);
+                    }
+                } else {
+                    if *double {
+                        ctx.draw_box_double(position.x, position.y, size.x, size.y, theme.ui_color, theme.background_color);
+                    } else {
+                        ctx.draw_box(position.x, position.y, size.x, size.y, theme.ui_color, theme.background_color);
+                    }
+                }
+             },
             UiAtomic::FullscreenOptions { options, selected } => {
                 let center = Vector::center(position, position + size);
                 for (i, option) in options.iter().enumerate() {
@@ -92,7 +104,7 @@ impl UiAtomic {
                 // First initialize all entity lists to empty vecs
                 let mut entity_map: HashMap<Vector, (Position, &Entity)> = HashMap::new();
 
-                let query = query!(Position, SingleGlyphRenderer);
+                let query = query!(Position, Renderer);
 
                 // Fill the lists according to priotity
                 for entity in world.query_entities(&query) {
@@ -110,11 +122,11 @@ impl UiAtomic {
 
                 // Render all top prioritized entities
                 for (position, entity) in entity_map.values() {
-                    if let Some(renderer) = entity.get_component::<SingleGlyphRenderer>() {
+                    if let Some(renderer) = entity.get_component::<Renderer>() {
                         let screen_pos = camera_transform.inverse_apply(position.coords());
 
                         // TODO: Fix bounds problem, thats a later hazel problem
-                        ctx.set(screen_pos.x, screen_pos.y, renderer.fg(), renderer.bg(), renderer.glyph());
+                        ctx.set(screen_pos.x, screen_pos.y, renderer.fg().unwrap_or(theme.background_color), renderer.bg().unwrap_or(theme.background_color), renderer.glyph());
                     }
                 }
             }
@@ -123,8 +135,7 @@ impl UiAtomic {
 
     pub fn tick(&self, world: &World, ctx: &mut Rltk) -> (UiAtomic, Option<String>) {
         match self {
-            UiAtomic::Box => (self.clone(), None),
-            UiAtomic::BoxHollow => (self.clone(), None),
+            UiAtomic::Box { hollow: _, double: _ } => (self.clone(), None),
             UiAtomic::FullscreenOptions { options, mut selected } => {
                 if let Some(key) = ctx.key {
                     match key {

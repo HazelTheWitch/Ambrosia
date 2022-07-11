@@ -20,6 +20,7 @@ mod transform;
 mod theme;
 mod input;
 mod ui;
+mod kdtree;
 
 static RAWS: Dir<'_> = include_dir!("$CARGO_MANIFEST_DIR/raws");
 

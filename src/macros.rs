@@ -36,8 +36,8 @@ macro_rules! query {
         $crate::query!($($ts),+).include::<$t>()
     };
 
-    ($world: expr, $($ts: ty),+) => {
-        $world.query_entities(&$crate::query!($($ts),+))
+    ($world: expr, $($ts: ty),*) => {
+        $world.query_entities(&$crate::query!($($ts),*))
     };
 }
 

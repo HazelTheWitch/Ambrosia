@@ -19,7 +19,7 @@
                     "position": {"x": 0, "y": 0},
                     "size": {"x": 119, "y": 79},
                     "atomics": [
-                        "Box"
+                        {"Box": {"hollow": false, "double": true}}
                     ]
                 },
                 {
@@ -38,8 +38,7 @@
                     ]
                 }
             ],
-            "clears": true,
-            "focused": 0
+            "clears": true
         },
         "game": {
             "results": {
@@ -57,12 +56,11 @@
                     "size": { "x": 80, "y": 60 },
                     "atomics": [
                         {"WorldView" : {"escape": "main_menu"}},
-                        "BoxHollow"
+                        {"Box": {"hollow": true, "double": true}}
                     ]
                 }
             ],
-            "clears": true,
-            "focused": 0
+            "clears": true
         }
     }
 }
