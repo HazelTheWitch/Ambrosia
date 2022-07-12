@@ -4,38 +4,40 @@ use crate::components::*;
 use crate::constants::*;
 use crate::ecs::*;
 
+type BuilderResult<'w> = Result<EntityBuilder<'w>, ECSError>;
+
 pub fn named(
-    entity: Result<&mut Entity, ECSError>,
+    entity: BuilderResult,
     name: String,
-) -> Result<&mut Entity, ECSError> {
+) -> BuilderResult {
     entity?.insert_component(Named::new(name))
 }
 
 pub fn debugged(
-    entity: Result<&mut Entity, ECSError>,
+    entity: BuilderResult,
     name: String,
-) -> Result<&mut Entity, ECSError> {
+) -> BuilderResult {
     named(entity, name)?.insert_component(Debug::new())
 }
 
 pub fn positioned(
-    entity: Result<&mut Entity, ECSError>,
+    entity: BuilderResult,
     x: i32,
     y: i32,
     priority: u8,
-) -> Result<&mut Entity, ECSError> {
+) -> BuilderResult {
     entity?.insert_component(Position::new(x, y, priority))
 }
 
 pub fn renderable(
-    entity: Result<&mut Entity, ECSError>,
+    entity: BuilderResult,
     x: i32,
     y: i32,
     priority: u8,
     character: char,
     fg: Option<(u8, u8, u8)>,
     bg: Option<(u8, u8, u8)>,
-) -> Result<&mut Entity, ECSError> {
+) -> BuilderResult {
     let fg = match fg {
         Some(color) => Some(RGB::named(color)),
         None => None
@@ -54,11 +56,11 @@ pub fn renderable(
 }
 
 pub fn player(
-    entity: Result<&mut Entity, ECSError>,
+    entity: BuilderResult,
     name: String,
     x: i32,
     y: i32,
-) -> Result<&mut Entity, ECSError> {
+) -> BuilderResult {
     renderable(
         debugged(entity, name),
         x,

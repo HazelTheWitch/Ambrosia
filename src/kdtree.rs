@@ -66,7 +66,9 @@ pub fn kdtree(world: &World) -> Option<Box<Node>> {
         if let Some(position) = entity.get_component::<Position>() {
             let entry = entities.entry(position.coords());
 
-            entry.or_insert(Vec::new()).push(entity.id());
+            if let Some(id) = entity.id() {
+                entry.or_insert(Vec::new()).push(id);
+            }
         }
     }
 

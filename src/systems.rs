@@ -22,7 +22,7 @@ impl System for DebugSystem {
             if let Some(mut debug) = e.get_component_mut::<Debug>() {
                 let name: String = match e.get_component::<Named>() {
                     Some(named) => named.name.to_string(),
-                    None => format!("Entity({})", e.id()),
+                    None => format!("Entity({:?})", e.id()),
                 };
 
                 if debug.max_level >= self.min_level && debug.count() > 0 {

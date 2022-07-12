@@ -1,11 +1,11 @@
-use std::any::{Any, TypeId};
+use std::any::{Any, TypeId, type_name};
 use std::cell::{UnsafeCell, Cell};
 use std::collections::{HashMap};
 use std::collections::hash_map::Entry;
 use std::fmt::Display;
 use std::ops::{Add, Deref, DerefMut};
 
-#[derive(Hash, PartialEq, Eq, Debug)]
+#[derive(Hash, PartialEq, Eq, Default, Clone, Debug)]
 struct SortedVec<T: Ord> {
     data: Vec<T>
 }
@@ -83,26 +83,29 @@ impl <T: Ord, F: IntoIterator<Item = T>> From<F> for SortedVec<T> {
 }
 
 
-#[derive(Hash, PartialEq, Eq, Debug)]
+#[derive(Hash, PartialEq, Eq, Clone, Debug)]
 pub struct Archetype {
-    types: SortedVec<TypeId>
+    types: SortedVec<TypeId>,
+    names: Vec<String>,
 }
 
 impl Archetype {
     pub fn new() -> Self {
-        Archetype { types: SortedVec::new() }
+        Archetype { types: SortedVec::new(), names: Vec::new() }
     }
 
-    pub fn add_type_id(mut self, type_id: TypeId) -> Self {
+    pub fn add_type_id(mut self, type_id: TypeId, name: String) -> Self {
         self.types.push(type_id);
+        self.names.push(name);
 
         self
     }
 
     pub fn add<T: Any>(self) -> Self {
         let type_id = TypeId::of::<T>();
+        let name = type_name::<T>().to_owned();
 
-        self.add_type_id(type_id)
+        self.add_type_id(type_id, name)
     }
 
     pub fn len(&self) -> usize {
@@ -122,6 +125,17 @@ impl Archetype {
     }
 }
 
+impl Display for Archetype {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "[{}]", self.names.join(", "))
+    }
+}
+
+impl Default for Archetype {
+    fn default() -> Self {
+        Self::new()
+    }
+}
 
 pub trait System {
     fn initialize(&self, _world: &World) {
@@ -337,16 +351,37 @@ impl DynamicStore {
     }
 }
 
-pub struct Entity {
-    id: usize,
+pub struct EntityBuilder<'w> {
+    world: &'w mut World,
     components: DynamicStore,
+    archetype: Archetype,
+}
+
+impl <'w> EntityBuilder<'w> {
+    pub fn build(self) -> &'w mut Entity {
+        let entity = Entity { id: None, components: self.components, archetype: self.archetype };
+
+        self.world.insert(entity)
+    }
+
+    pub fn insert_component<T: Any>(mut self, component: T) -> Result<Self, ECSError> {
+        self.components.insert(component)?;
+        Ok(self)
+    }
+}
+
+pub struct Entity {
+    id: Option<usize>,
+    components: DynamicStore,
+    archetype: Archetype
 }
 
 impl Entity {
-    pub fn new(id: usize) -> Self {
-        Entity {
-            id,
+    pub fn new(world: &mut World) -> EntityBuilder {
+        EntityBuilder {
+            world,
             components: Default::default(),
+            archetype: Default::default()
         }
     }
 
@@ -371,7 +406,7 @@ impl Entity {
         self.components.get_mut::<T>()
     }
 
-    pub fn id(&self) -> usize {
+    pub fn id(&self) -> Option<usize> {
         self.id
     }
 }
@@ -445,43 +480,64 @@ impl Add for Query {
     }
 }
 
+// TODO: implement entity id reuse
 pub struct World {
     entities: Vec<Option<Entity>>,
+    archetypes: HashMap<Archetype, Vec<usize>>,
     systems: Vec<(Box<dyn System>, i32)>,
     resources: DynamicStore,
+    current_id: usize
 }
 
 impl World {
     pub fn new() -> Self {
         World {
             entities: Default::default(),
+            archetypes: Default::default(),
             systems: Default::default(),
             resources: Default::default(),
+            current_id: Default::default()
         }
     }
 
-    pub fn spawn(&mut self) -> Result<&mut Entity, ECSError> {
-        let entity = Entity::new(self.entities.len());
-        let id = entity.id;
-        self.entities.push(Some(entity));
+    pub fn spawn(&mut self) -> EntityBuilder {
+        Entity::new(self)
+    }
+    
+    fn get_id_increment(&mut self) -> usize {
+        let id = self.current_id;
+        self.current_id += 1;
 
-        if let Some(Some(entity)) = self.entities.get_mut(id) {
-            Ok(entity)
-        } else {
-            Err(ECSError::CouldNotSpawn)
-        }
+        id
     }
 
-    pub fn insert(&mut self, entity: Entity) {
+    pub fn insert(&mut self, mut entity: Entity) -> &mut Entity {
+        let archetype = entity.archetype.clone();
+        let id = self.get_id_increment();
+
+        entity.id = Some(id);
         self.entities.push(Some(entity));
+        
+        let entry = self.archetypes.entry(archetype);
+        entry.or_insert(Default::default()).push(id);
+
+        unsafe { self.get_unchecked_mut(id) }
     }
 
     pub fn get(&self, id: usize) -> Option<&Entity> {
-        if id < self.entities.len() {
-            self.entities[id].as_ref()
-        } else {
-            None
-        }
+        self.entities.get(id)?.as_ref()
+    }
+
+    pub fn get_mut(&mut self, id: usize) -> Option<&mut Entity> {
+        self.entities.get_mut(id)?.as_mut()
+    }
+
+    pub unsafe fn get_unchecked(&self, id: usize) -> &Entity {
+        self.entities.get_unchecked(id).as_ref().expect("a valid entity object, not None")
+    }
+
+    pub unsafe fn get_unchecked_mut(&mut self, id: usize) -> &mut Entity {
+        self.entities.get_unchecked_mut(id).as_mut().expect("a valid entity object, not None")
     }
 
     pub fn iter(&self) -> impl Iterator<Item = &Entity> {
@@ -509,7 +565,7 @@ impl World {
     }
 
     pub fn remove(&mut self, entity: Entity) {
-        self.entities[entity.id] = None;
+        self.entities[entity.id.expect("an inserted entity")] = None;
     }
 
     pub fn remove_id(&mut self, id: usize) {
@@ -582,7 +638,7 @@ pub enum ECSError {
 #[macro_export]
 macro_rules! archetype {
     ($t: ty) => {
-        $crate::storage::archetype::Archetype::new().add::<$t>()
+        $crate::ecs::Archetype::new().add::<$t>()
     };
 
     ($t: ty, $($ts: ty),+) => {
