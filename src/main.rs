@@ -73,7 +73,7 @@ impl State {
     }
 
     pub fn open_by_id(&mut self, id: String) {
-        let panel = self.ui_master.get_panel(id).unwrap().clone();
+        let panel = self.ui_master.get_panel(id).expect("a valid panel_id").clone();
         self.open(&panel);
     }
 
@@ -85,7 +85,7 @@ impl State {
     }
 
     pub fn close(&mut self) {
-        self.ui_panels.pop().unwrap();
+        self.ui_panels.pop();
     }
 
     pub fn close_all(&mut self) {
