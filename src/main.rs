@@ -2,7 +2,7 @@
 #![feature(downcast_unchecked)]
 
 use std::process::exit;
-use ecs::{World, EntityId};
+use ecs::{entity::{EntityId, Entity}, world::World};
 use include_dir::{include_dir, Dir};
 use rltk::{Rltk, GameState};
 use ui::{UiAction, UiPanel, UiMaster};
@@ -33,14 +33,14 @@ impl KeyEntities {
         KeyEntities { player: None }
     }
 
-    pub fn set_player(&mut self, player: &ecs::Entity) {
+    pub fn set_player(&mut self, player: &Entity) {
         match self.player {
             Some(_) => panic!("Already had a player entity!"),
             None => { self.player = Some(player.id().unwrap().clone()); }
         }
     }
 
-    pub fn player<'a>(&'a self, world: &'a World) -> Option<&ecs::Entity> {
+    pub fn player<'a>(&'a self, world: &'a World) -> Option<&Entity> {
         world.get(self.player.as_ref()?)
     }
 }
@@ -52,14 +52,14 @@ impl Default for KeyEntities {
 }
 
 pub struct State {
-    world: ecs::World,
+    world: World,
     ui_panels: Vec<UiPanel>,
     ui_master: UiMaster,
 }
 
 impl State {
     fn new(ui: UiMaster) -> Self {
-        let mut state = State { world: ecs::World::new(), ui_panels: Vec::new(), ui_master: ui.clone() };
+        let mut state = State { world: World::new(), ui_panels: Vec::new(), ui_master: ui.clone() };
 
         for panel in ui.open_panels() {
             state.open(panel);

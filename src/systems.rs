@@ -1,5 +1,5 @@
 use crate::components::*;
-use crate::ecs::*;
+use crate::ecs::{query::Query, system::System, world::World};
 use crate::map::Map;
 
 pub struct DebugSystem {

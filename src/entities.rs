@@ -2,7 +2,7 @@ use rltk::RGB;
 
 use crate::components::*;
 use crate::constants::*;
-use crate::ecs::*;
+use crate::ecs::{ECSError, entity::EntityBuilder};
 
 type BuilderResult<'w> = Result<EntityBuilder<'w>, ECSError>;
 

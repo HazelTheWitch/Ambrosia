@@ -1,8 +1,8 @@
-use std::{collections::HashMap, ops::Index, cmp::Ordering};
+use std::{collections::HashMap, cmp::Ordering};
 
 use rand::{prelude::SliceRandom, thread_rng};
 
-use crate::{vectors::Vector, ecs::{World, EntityId}, query, components::Position};
+use crate::{vectors::Vector, ecs::{world::World, entity::EntityId}, query, components::Position};
 
 type Entities = Vec<EntityId>;
 type Entry = (Vector, Entities);

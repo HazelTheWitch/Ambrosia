@@ -25,7 +25,7 @@ macro_rules! add_system {
 #[macro_export]
 macro_rules! query {
     () => {
-        $crate::ecs::Query::new()
+        $crate::ecs::query::Query::new()
     };
 
     ($t: ty) => {

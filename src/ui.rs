@@ -3,7 +3,7 @@ use std::collections::HashMap;
 use rltk::Rltk;
 use serde::Deserialize;
 
-use crate::{vectors::{Vector, ZERO_VECTOR}, theme::Theme, ecs::{World, Entity}, map::Map, query_one, components::{Position, Camera, Renderer, Player, Viewshed}, transform::Transform, query, kdtree::kdtree};
+use crate::{vectors::{Vector, ZERO_VECTOR}, theme::Theme, ecs::{world::World, entity::Entity}, map::Map, query_one, components::{Position, Camera, Renderer, Player, Viewshed}, transform::Transform, query, kdtree::kdtree};
 
 #[derive(Deserialize, Clone, PartialEq, Eq, Debug)]
 pub enum UiAction {

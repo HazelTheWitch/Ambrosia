@@ -2,7 +2,7 @@ use std::fmt::Display;
 
 use rltk::Rltk;
 
-use crate::{clamp, constants::MAP_SIZE, vectors::Vector, ecs::World, theme::Theme, transform::Transform, systems::TickInfo};
+use crate::{clamp, constants::MAP_SIZE, vectors::Vector, ecs::world::World, theme::Theme, transform::Transform, systems::TickInfo};
 
 /// Represents a tile
 /// Strength:
