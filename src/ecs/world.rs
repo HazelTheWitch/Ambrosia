@@ -27,19 +27,27 @@ impl World {
         EntityId::new(archetype, entry.or_default().len())
     }
 
-    pub fn insert(&mut self, mut entity: Entity) -> &mut Entity {
+    pub fn insert(&mut self, mut entity: Entity) -> Result<&mut Entity, ECSError> {
         let id = self.get_next_id(entity.archetype().clone());
 
         let entry = self.entities.entry(entity.archetype().clone());
 
-        entity.set_id(id.clone());
+        entity.try_set_id(id.clone())?;
 
         let entities = entry.or_default();
 
-        entities.insert(id.index(), Some(entity));
-        
-        unsafe {
-            entities.get_unchecked_mut(id.index()).as_mut().unwrap()
+        if id.index() < entities.len() { // Can insert entity
+            entities.insert(id.index(), Some(entity));
+        } else {
+            return Err(ECSError::InvalidInsertionIndex(id.index()))
+        }
+
+        match entities.get_mut(id.index()) {
+            Some(entity) => match entity.as_mut() {
+                Some(entity) => Ok(entity),
+                None => Err(ECSError::CouldNotRetrieve),
+            },
+            None => Err(ECSError::CouldNotRetrieve),
         }
     }
 

@@ -147,7 +147,12 @@ impl UiAtomic {
                             selected = (selected + 1) % options.len(); 
                             (UiAtomic::FullscreenOptions { options: options.clone(), selected }, None)
                         },
-                        rltk::VirtualKeyCode::Return => (self.clone(), Some(options.get(selected).unwrap().id.to_owned())),
+                        rltk::VirtualKeyCode::Return => {
+                            match options.get(selected) {
+                                Some(option) => (self.clone(), Some(option.id.to_owned())),
+                                None => (self.clone(), None)
+                            }
+                        }
                         _ => (self.clone(), None)
                     }
                 } else {
@@ -258,7 +263,7 @@ impl UiPanel {
     pub fn tick(&mut self, world: &World, ctx: &mut Rltk) -> Option<&UiAction> {
         for component in self.components.iter_mut() {
             if let Some(action) = component.tick(world, ctx) {
-                return Some(self.results.get(&action).unwrap());
+                return Some(self.results.get(&action)?);
             }
         }
 

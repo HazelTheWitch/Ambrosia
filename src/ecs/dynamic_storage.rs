@@ -16,7 +16,7 @@ impl <'b, T> DynamicRef<'b, T> {
 
 impl <'b, T> Drop for DynamicRef<'b, T> {
     fn drop(&mut self) {
-        self.reference_state_cell.set(self.reference_state_cell.get().decrement().unwrap());
+        self.reference_state_cell.set(self.reference_state_cell.get().decrement());
     }
 }
 
@@ -42,7 +42,7 @@ impl <'b, T> DynamicRefMut<'b, T> {
 
 impl <'b, T> Drop for DynamicRefMut<'b, T> {
     fn drop(&mut self) {
-        self.reference_state_cell.set(self.reference_state_cell.get().decrement_mut().unwrap());
+        self.reference_state_cell.set(self.reference_state_cell.get().decrement_mut());
     }
 }
 
@@ -128,14 +128,14 @@ impl ReferenceState {
         }
     }
 
-    fn decrement(&self) -> Option<Self> {
+    fn decrement(&self) -> Self {
         match self {
             ReferenceState::Immutable(count) => {
                 let count = count - 1;
                 if count > 0 {
-                    Some(ReferenceState::Immutable(count))
+                    ReferenceState::Immutable(count)
                 } else {
-                    Some(ReferenceState::None)
+                    ReferenceState::None
                 }
             },
             ReferenceState::Mutable => panic!("attempted to decrement a mutable reference"),
@@ -143,10 +143,10 @@ impl ReferenceState {
         }
     }
 
-    fn decrement_mut(&self) -> Option<Self> {
+    fn decrement_mut(&self) -> Self {
         match self {
             ReferenceState::Immutable(_) => panic!("attempted to decrement_mut an immutable reference"),
-            ReferenceState::Mutable => Some(ReferenceState::None),
+            ReferenceState::Mutable => ReferenceState::None,
             ReferenceState::None => panic!("attempted to decrement a value not currently referenced"),
         }
     }

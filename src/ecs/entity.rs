@@ -29,7 +29,7 @@ pub struct EntityBuilder<'w> {
 }
 
 impl <'w> EntityBuilder<'w> {
-    pub fn build(self) -> &'w mut Entity {
+    pub fn build(self) -> Result<&'w mut Entity, ECSError> {
         let entity = Entity { id: None, components: self.components, archetype: self.archetype };
 
         self.world.insert(entity)
@@ -78,10 +78,10 @@ impl Entity {
         self.components.get_mut::<T>()
     }
 
-    pub fn set_id(&mut self, id: EntityId) {
+    pub (super) fn try_set_id(&mut self, id: EntityId) -> Result<(), ECSError> {
         match self.id {
-            Some(_) => panic!("Already inserted this entity."),
-            None => { self.id = Some(id); }
+            Some(_) => Err(ECSError::AlreadyInserted),
+            None => { self.id = Some(id); Ok(()) }
         }
     }
 

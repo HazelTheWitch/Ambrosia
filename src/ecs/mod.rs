@@ -9,4 +9,7 @@ pub mod archetype;
 pub enum ECSError {
     DataAlreadyExists,
     CouldNotSpawn,
+    AlreadyInserted,
+    InvalidInsertionIndex(usize),
+    CouldNotRetrieve,
 }
