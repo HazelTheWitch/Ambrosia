@@ -2,9 +2,9 @@ use std::{collections::HashMap, ops::Index, cmp::Ordering};
 
 use rand::{prelude::SliceRandom, thread_rng};
 
-use crate::{vectors::Vector, ecs::World, query, components::Position};
+use crate::{vectors::Vector, ecs::{World, EntityId}, query, components::Position};
 
-type Entities = Vec<usize>;
+type Entities = Vec<EntityId>;
 type Entry = (Vector, Entities);
 
 pub struct Node {
@@ -67,7 +67,7 @@ pub fn kdtree(world: &World) -> Option<Box<Node>> {
             let entry = entities.entry(position.coords());
 
             if let Some(id) = entity.id() {
-                entry.or_insert(Vec::new()).push(id);
+                entry.or_insert(Vec::new()).push(id.clone());
             }
         }
     }

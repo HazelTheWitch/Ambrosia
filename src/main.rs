@@ -2,7 +2,7 @@
 #![feature(downcast_unchecked)]
 
 use std::process::exit;
-use ecs::World;
+use ecs::{World, EntityId};
 use include_dir::{include_dir, Dir};
 use rltk::{Rltk, GameState};
 use ui::{UiAction, UiPanel, UiMaster};
@@ -25,7 +25,7 @@ mod kdtree;
 static RAWS: Dir<'_> = include_dir!("$CARGO_MANIFEST_DIR/raws");
 
 pub struct KeyEntities {
-    player: Option<usize>
+    player: Option<EntityId>
 }
 
 impl KeyEntities {
@@ -36,16 +36,12 @@ impl KeyEntities {
     pub fn set_player(&mut self, player: &ecs::Entity) {
         match self.player {
             Some(_) => panic!("Already had a player entity!"),
-            None => { self.player = Some(player.id().unwrap()); }
+            None => { self.player = Some(player.id().unwrap().clone()); }
         }
     }
 
     pub fn player<'a>(&'a self, world: &'a World) -> Option<&ecs::Entity> {
-        world.get(self.player?)
-    }
-
-    pub fn player_unchecked<'a>(&'a self, world: &'a World) -> &ecs::Entity {
-        world.get(self.player.unwrap()).unwrap()
+        world.get(self.player.as_ref()?)
     }
 }
 

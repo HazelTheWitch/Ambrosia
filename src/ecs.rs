@@ -1,6 +1,6 @@
 use std::any::{Any, TypeId, type_name};
 use std::cell::{UnsafeCell, Cell};
-use std::collections::{HashMap};
+use std::collections::HashMap;
 use std::collections::hash_map::Entry;
 use std::fmt::Display;
 use std::ops::{Add, Deref, DerefMut};
@@ -82,6 +82,18 @@ impl <T: Ord, F: IntoIterator<Item = T>> From<F> for SortedVec<T> {
     }
 }
 
+#[derive(Hash, PartialEq, Eq, Clone, Debug)]
+pub struct EntityId {
+    index: usize,
+    archetype: Archetype
+}
+
+impl EntityId {
+    pub fn new(archetype: Archetype, index: usize) -> Self {
+        EntityId { index, archetype }
+    }
+}
+
 
 #[derive(Hash, PartialEq, Eq, Clone, Debug)]
 pub struct Archetype {
@@ -94,14 +106,14 @@ impl Archetype {
         Archetype { types: SortedVec::new(), names: Vec::new() }
     }
 
-    pub fn add_type_id(mut self, type_id: TypeId, name: String) -> Self {
+    pub fn add_type_id(&mut self, type_id: TypeId, name: String) -> &mut Self {
         self.types.push(type_id);
         self.names.push(name);
 
         self
     }
 
-    pub fn add<T: Any>(self) -> Self {
+    pub fn add<T: Any>(&mut self) -> &mut Self {
         let type_id = TypeId::of::<T>();
         let name = type_name::<T>().to_owned();
 
@@ -116,12 +128,12 @@ impl Archetype {
         self.types.contains(&other.types)
     }
 
-    pub fn has_type_id(&self, item: TypeId) -> bool {
-        self.types.has(&item)
+    pub fn has_type_id(&self, item: &TypeId) -> bool {
+        self.types.has(item)
     }
 
     pub fn has<T: Any>(&self) -> bool {
-        self.has_type_id(TypeId::of::<T>())
+        self.has_type_id(&TypeId::of::<T>())
     }
 }
 
@@ -366,12 +378,13 @@ impl <'w> EntityBuilder<'w> {
 
     pub fn insert_component<T: Any>(mut self, component: T) -> Result<Self, ECSError> {
         self.components.insert(component)?;
+        self.archetype.add::<T>();
         Ok(self)
     }
 }
 
 pub struct Entity {
-    id: Option<usize>,
+    id: Option<EntityId>,
     components: DynamicStore,
     archetype: Archetype
 }
@@ -406,8 +419,8 @@ impl Entity {
         self.components.get_mut::<T>()
     }
 
-    pub fn id(&self) -> Option<usize> {
-        self.id
+    pub fn id(&self) -> Option<&EntityId> {
+        self.id.as_ref()
     }
 }
 
@@ -451,6 +464,10 @@ impl Query {
         true
     }
 
+    pub fn matches(&self, archetype: &Archetype) -> bool {
+        self.includes.iter().all(|ty| { archetype.has_type_id(ty) }) && !self.excludes.iter().any(|ty| { archetype.has_type_id(ty) })
+    }
+
     pub fn join(&mut self, other: Query) -> &mut Self {
         for include in other.includes {
             self.includes.push(include);
@@ -482,21 +499,17 @@ impl Add for Query {
 
 // TODO: implement entity id reuse
 pub struct World {
-    entities: Vec<Option<Entity>>,
-    archetypes: HashMap<Archetype, Vec<usize>>,
+    entities: HashMap<Archetype, Vec<Option<Entity>>>,
     systems: Vec<(Box<dyn System>, i32)>,
     resources: DynamicStore,
-    current_id: usize
 }
 
 impl World {
     pub fn new() -> Self {
         World {
             entities: Default::default(),
-            archetypes: Default::default(),
             systems: Default::default(),
             resources: Default::default(),
-            current_id: Default::default()
         }
     }
 
@@ -504,72 +517,69 @@ impl World {
         Entity::new(self)
     }
     
-    fn get_id_increment(&mut self) -> usize {
-        let id = self.current_id;
-        self.current_id += 1;
-
-        id
+    fn get_next_id(&mut self, archetype: Archetype) -> EntityId {
+        let entry = self.entities.entry(archetype.clone());
+        EntityId::new(archetype, entry.or_default().len())
     }
 
     pub fn insert(&mut self, mut entity: Entity) -> &mut Entity {
-        let archetype = entity.archetype.clone();
-        let id = self.get_id_increment();
+        let id = self.get_next_id(entity.archetype.clone());
 
-        entity.id = Some(id);
-        self.entities.push(Some(entity));
+        let entry = self.entities.entry(entity.archetype.clone());
+
+        entity.id = Some(id.clone());
+
+        let entities = entry.or_default();
+
+        entities.insert(id.index, Some(entity));
         
-        let entry = self.archetypes.entry(archetype);
-        entry.or_insert(Default::default()).push(id);
-
-        unsafe { self.get_unchecked_mut(id) }
+        unsafe {
+            entities.get_unchecked_mut(id.index).as_mut().unwrap()
+        }
     }
 
-    pub fn get(&self, id: usize) -> Option<&Entity> {
-        self.entities.get(id)?.as_ref()
+    pub fn get(&self, id: &EntityId) -> Option<&Entity> {
+        self.entities.get(&id.archetype)?.get(id.index)?.as_ref()
     }
 
-    pub fn get_mut(&mut self, id: usize) -> Option<&mut Entity> {
-        self.entities.get_mut(id)?.as_mut()
-    }
-
-    pub unsafe fn get_unchecked(&self, id: usize) -> &Entity {
-        self.entities.get_unchecked(id).as_ref().expect("a valid entity object, not None")
-    }
-
-    pub unsafe fn get_unchecked_mut(&mut self, id: usize) -> &mut Entity {
-        self.entities.get_unchecked_mut(id).as_mut().expect("a valid entity object, not None")
+    pub fn get_mut(&mut self, id: &EntityId) -> Option<&mut Entity> {
+        self.entities.get_mut(&id.archetype)?.get_mut(id.index)?.as_mut()
     }
 
     pub fn iter(&self) -> impl Iterator<Item = &Entity> {
-        self.entities.iter().flatten()
+        self.entities.values().flat_map(|entity_vec| { entity_vec.iter() }).flatten()
     }
 
     pub fn iter_mut(&mut self) -> impl Iterator<Item = &mut Entity> {
-        self.entities.iter_mut().flatten()
+        self.entities.values_mut().flat_map(|entity_vec| { entity_vec.iter_mut() }).flatten()
     }
 
     pub fn query_entities<'a>(&'a self, query: &'a Query) -> impl Iterator<Item = &'a Entity> {
-        self.iter().filter(|entity| query.contains(entity))
+        self.entities.iter().filter_map(|(archetype, entities)| {
+            if query.matches(archetype) {
+                Some(entities)
+            } else {
+                None
+            }
+         }).flat_map(|entities| { entities.iter() }).flatten()
     }
 
     pub fn query_one_entity<'a>(&'a self, query: &'a Query) -> Option<&Entity> {
-        for e in &self.entities {
-            if let Some(e) = e {
-                if query.contains(e) {
-                    return Some(e);
-                }
-            }
-        }
-
-        None
+        self.query_entities(query).next()
     }
 
-    pub fn remove(&mut self, entity: Entity) {
-        self.entities[entity.id.expect("an inserted entity")] = None;
+    pub fn remove(&mut self, entity: Entity) -> Option<Entity> {
+        let id = entity.id.expect("an inserted entity");
+
+        let list = self.entities.get_mut(&id.archetype).expect("a valid archetype");
+
+        list.remove(id.index)
     }
 
-    pub fn remove_id(&mut self, id: usize) {
-        self.entities[id] = None;
+    pub fn remove_id(&mut self, id: EntityId) -> Option<Entity> {
+        let list = self.entities.get_mut(&id.archetype).expect("a valid archetype");
+
+        list.remove(id.index)
     }
 
     pub fn add_system(&mut self, system: Box<dyn System>, priority: i32) -> &mut Self {
