@@ -11,19 +11,10 @@ impl <T: Ord> SortedVec<T> {
     }
 
     pub fn push(&mut self, item: T) {
-        let mut index = 0;
-
-        while let Some(other) = self.data.get(index) {
-            if *other == item {
-                return;
-            }
-
-            if *other > item {
-                break;
-            }
-
-            index += 1;
-        }
+        let index = match self.data.binary_search(&item) {
+            Ok(_) => return,
+            Err(index) => index,
+        };
 
         self.data.insert(index, item);
     }
@@ -51,17 +42,10 @@ impl <T: Ord> SortedVec<T> {
     }
 
     pub fn has(&self, item: &T) -> bool {
-        for other in self.data.iter() {
-            if item == other {
-                return true;
-            }
-
-            if item < other {
-                return false;
-            }
+        match self.data.binary_search(item) {
+            Ok(_) => true,
+            Err(_) => false
         }
-
-        false
     }
 }
 
@@ -116,6 +100,10 @@ impl Archetype {
 
     pub fn has<T: Any>(&self) -> bool {
         self.has_type_id(&TypeId::of::<T>())
+    }
+
+    pub fn names(&self) -> Vec<String> {
+        self.names.clone()
     }
 }
 

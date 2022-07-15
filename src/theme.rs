@@ -12,10 +12,10 @@ pub struct Theme {
 impl Theme {
     pub fn new() -> Self {
         Theme {
-            ui_color: RGB::named(constants::UI_COLOR),
-            background_color: RGB::named(constants::BACKGROUND_COLOR),
-            terrain_color_visible: RGB::named(constants::TERRAIN_COLOR_VISIBLE),
-            terrain_color_discovered: RGB::named(constants::TERRAIN_COLOR_DISCOVERED),
+            ui_color: constants::UI_COLOR.into(),
+            background_color: constants::BACKGROUND_COLOR.into(),
+            terrain_color_visible: constants::TERRAIN_COLOR_VISIBLE.into(),
+            terrain_color_discovered: constants::TERRAIN_COLOR_DISCOVERED.into(),
         }
     }
 }

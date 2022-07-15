@@ -1,4 +1,4 @@
-use crate::vectors::Vector;
+use crate::{vectors::Vector};
 
 // Map
 pub const MAP_SIZE: (usize, usize) = (100, 100);

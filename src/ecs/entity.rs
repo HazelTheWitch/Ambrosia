@@ -1,6 +1,6 @@
-use std::any::{Any, TypeId};
+use std::{any::{Any, TypeId}, fmt::Display};
 
-use super::{archetype::Archetype, world::World, dynamic_storage::{DynamicStore, DynamicRef, DynamicRefMut}, ECSError};
+use super::{archetype::Archetype, dynamic_storage::{DynamicStore, DynamicRef, DynamicRefMut}, ECSError};
 
 #[derive(Hash, PartialEq, Eq, Clone, Debug)]
 pub struct EntityId {
@@ -22,17 +22,21 @@ impl EntityId {
     }
 }
 
-pub struct EntityBuilder<'w> {
-    world: &'w mut World,
+impl Display for EntityId {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "[{}, [{}]]", self.index, self.archetype.names().join(", "))?;
+        Ok(())
+    }
+}
+
+pub struct EntityBuilder {
     components: DynamicStore,
     archetype: Archetype,
 }
 
-impl <'w> EntityBuilder<'w> {
-    pub fn build(self) -> Result<&'w mut Entity, ECSError> {
-        let entity = Entity { id: None, components: self.components, archetype: self.archetype };
-
-        self.world.insert(entity)
+impl EntityBuilder {
+    pub fn build(self) -> Entity {
+        Entity { id: None, components: self.components, archetype: self.archetype }
     }
 
     pub fn insert_component<T: Any>(mut self, component: T) -> Result<Self, ECSError> {
@@ -49,9 +53,8 @@ pub struct Entity {
 }
 
 impl Entity {
-    pub fn new(world: &mut World) -> EntityBuilder {
+    pub fn new() -> EntityBuilder {
         EntityBuilder {
-            world,
             components: Default::default(),
             archetype: Default::default()
         }

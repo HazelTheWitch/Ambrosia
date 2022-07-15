@@ -33,10 +33,10 @@ impl KeyEntities {
         KeyEntities { player: None }
     }
 
-    pub fn set_player(&mut self, player: &Entity) {
+    pub fn set_player(&mut self, player: &EntityId) {
         match self.player {
             Some(_) => panic!("Already had a player entity!"),
-            None => { self.player = Some(player.id().unwrap().clone()); }
+            None => { self.player = Some(player.clone()); }
         }
     }
 
@@ -175,13 +175,13 @@ fn main() -> rltk::BError {
     add_system!(gs.world, systems::ViewSystem::new(), -900);
     add_system!(gs.world, systems::DebugSystem::new(components::DebugLevel::None), -1000);
 
-    let player = entities::player(
-        Ok(gs.world.spawn()),
+    let player = gs.world.insert(entities::player(
+        Ok(Entity::new()),
         "Hazel".into(),
         (constants::MAP_SIZE.0 / 2) as i32,
         (constants::MAP_SIZE.1 / 2) as i32
-    ).unwrap().build().unwrap();
-    key_entities.set_player(player);
+    ).unwrap().build()).unwrap();
+    key_entities.set_player(&player);
 
     let _ = gs.world.insert_resource(key_entities).unwrap();
 

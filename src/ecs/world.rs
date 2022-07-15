@@ -1,8 +1,7 @@
-use std::{collections::HashMap, any::{TypeId, Any}};
+use std::{collections::HashMap, any::{TypeId, Any}, cmp::Ordering};
 
-use super::{archetype::Archetype, entity::{Entity, EntityBuilder, EntityId}, system::System, dynamic_storage::{DynamicStore, DynamicRef, DynamicRefMut}, query::Query, ECSError};
+use super::{archetype::Archetype, entity::{Entity, EntityId}, system::System, dynamic_storage::{DynamicStore, DynamicRef, DynamicRefMut}, query::Query, ECSError};
 
-// TODO: implement entity id reuse
 pub struct World {
     entities: HashMap<Archetype, Vec<Option<Entity>>>,
     systems: Vec<(Box<dyn System>, i32)>,
@@ -17,17 +16,22 @@ impl World {
             resources: Default::default(),
         }
     }
-
-    pub fn spawn(&mut self) -> EntityBuilder {
-        Entity::new(self)
-    }
     
     fn get_next_id(&mut self, archetype: Archetype) -> EntityId {
         let entry = self.entities.entry(archetype.clone());
-        EntityId::new(archetype, entry.or_default().len())
+
+        let entities = entry.or_default();
+        
+        for (index, entity) in entities.iter().enumerate() {
+            if let None = entity {
+                return EntityId::new(archetype, index);
+            }
+        }
+
+        EntityId::new(archetype, entities.len())
     }
 
-    pub fn insert(&mut self, mut entity: Entity) -> Result<&mut Entity, ECSError> {
+    pub fn insert(&mut self, mut entity: Entity) -> Result<EntityId, ECSError> {
         let id = self.get_next_id(entity.archetype().clone());
 
         let entry = self.entities.entry(entity.archetype().clone());
@@ -36,19 +40,13 @@ impl World {
 
         let entities = entry.or_default();
 
-        if id.index() < entities.len() { // Can insert entity
-            entities.insert(id.index(), Some(entity));
-        } else {
-            return Err(ECSError::InvalidInsertionIndex(id.index()))
+        match id.index().cmp(&entities.len()) {
+            Ordering::Less => { entities[id.index()] = Some(entity); },
+            Ordering::Equal => { entities.insert(id.index(), Some(entity)); },
+            Ordering::Greater => { return Err(ECSError::InvalidInsertionIndex(id.index())); },
         }
 
-        match entities.get_mut(id.index()) {
-            Some(entity) => match entity.as_mut() {
-                Some(entity) => Ok(entity),
-                None => Err(ECSError::CouldNotRetrieve),
-            },
-            None => Err(ECSError::CouldNotRetrieve),
-        }
+        Ok(id)
     }
 
     pub fn get(&self, id: &EntityId) -> Option<&Entity> {
